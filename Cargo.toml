@@ -1,0 +1,14 @@
+[package]
+name = "hugo4os"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["boot"]
+
+[dependencies]
+lazy_static = { version = "1.*.*", features = ["spin_no_std"] }
+bootloader = "0.10.*"
+uart_16550 = "0.2.*"
+spin = "0.9.*"
+x86_64 = "*"
