@@ -1,8 +1,52 @@
 use bootloader::boot_info::{FrameBuffer, PixelFormat};
 
 use crate::println;
+use crate::data;
 
 pub static mut FRAMEBUFFER: Option<&'static mut FrameBuffer> = None;
+pub static mut FB_BPP: usize = 0;
+pub static mut FB_ACTUAL_STRIDE: usize = 0;
+pub static mut FB_FORMAT: PixelFormat = PixelFormat::RGB;
+pub static mut FB_START: *mut u8 = 0u8 as *mut u8;
+pub static mut FB_WIDTH: usize = 0;
+pub static mut FB_HEIGHT: usize = 0;
+
+pub unsafe fn set_framebuffer(fb: &'static mut FrameBuffer) {
+    let info = fb.info();
+    let pixel_format = match info.pixel_format {
+        PixelFormat::RGB => "RGB",
+        PixelFormat::BGR => "BGR",
+        PixelFormat::U8 => "U8 (Grayscale)",
+        other => panic!("Unrecognized pixel format: {:?}", other),
+    };
+    let bytes_per_pixel = info.bytes_per_pixel;
+    let width = info.horizontal_resolution;
+    let height = info.vertical_resolution;
+
+    #[rustfmt::skip]
+    println!(concat!(   "===================================== \n",
+                        "  Display information                 \n",
+                        "===================================== \n",
+                        "  Resolution          | {}x{}         \n",
+                        "  Pixel format        | {}            \n",
+                        "  Bytes per pixel     | {}            \n",
+                        "===================================== \n"),
+                        width, height, pixel_format, bytes_per_pixel);
+    
+    FB_BPP = info.bytes_per_pixel;
+    FB_ACTUAL_STRIDE = FB_BPP * info.stride;
+    FB_FORMAT = info.pixel_format;
+    FB_WIDTH = info.horizontal_resolution;
+    FB_HEIGHT = info.vertical_resolution;
+    FB_START = fb.get_start_address();
+    FRAMEBUFFER = Some(fb);
+
+    clear_background();
+
+    println!("Loading images...");
+    ensure_format(data::PIXEL_ART, PixelFormat::RGB);
+    println!("Done loading...");
+}
 
 pub trait FrameBufferMakePublic {
     unsafe fn get_start_address(&mut self) -> *mut u8;
@@ -14,73 +58,80 @@ impl FrameBufferMakePublic for FrameBuffer {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[repr(C)]
-pub struct Rect(pub usize, pub usize, pub usize, pub usize);
+#[inline]
+pub fn is_same_format(left: PixelFormat, right: PixelFormat) -> bool {
+    match (left, right) {
+        (PixelFormat::RGB, PixelFormat::RGB) => true,
+        (PixelFormat::BGR, PixelFormat::BGR) => true,
+        (PixelFormat::U8, PixelFormat::U8) => true,
+        _ => false,
+    }
+}
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[repr(C)]
-pub struct Color(pub u8, pub u8, pub u8);
-
-impl Color {
-    pub fn from_argb(argb: u32) -> Color {
-        Color(
-            ((argb & 0x00FF0000) >> 16) as u8,
-            ((argb & 0x0000FF00) >> 8) as u8,
-            (argb & 0x000000FF) as u8,
-        )
+pub fn convert_color(from: u32, from_format: PixelFormat, to: PixelFormat) -> u32 {
+    if is_same_format(from_format, to) {
+        return from;
     }
 
-    pub fn to_pixel(self, format: PixelFormat) -> [u8; 3] {
-        match format {
-            PixelFormat::RGB => [self.0, self.1, self.2],
-            PixelFormat::BGR => [self.2, self.1, self.0],
-            PixelFormat::U8 => {
-                let luminance = (((self.0 + self.1 + self.2) as f32) / 3.0) as u8;
-                [luminance, luminance, luminance]
-            },
-            _ => [0, 0, 0],
+    let argb = match from_format {
+        PixelFormat::RGB => {
+            from
+        },
+        PixelFormat::BGR => {
+            let abgr = from.to_be_bytes();
+            u32::from_be_bytes([
+                abgr[0],
+                abgr[3],
+                abgr[2],
+                abgr[1],
+            ])
+        },
+        _ => return from
+    };
+
+    match to {
+        PixelFormat::RGB => {
+            argb
+        },
+        PixelFormat::BGR => {
+            let argb = argb.to_be_bytes();
+            u32::from_be_bytes([
+                argb[0],
+                argb[3],
+                argb[2],
+                argb[1],
+            ])
+        },
+        _ => return from
+    }
+}
+
+pub unsafe fn ensure_format(data: &mut [u32], format: PixelFormat) {
+    if !is_same_format(format, FB_FORMAT) {
+        for color in data.iter_mut() {
+            *color = convert_color(*color, format, FB_FORMAT);
         }
     }
 }
 
-pub fn set_background(color: Color) {
-    if let Some(framebuffer) = unsafe { FRAMEBUFFER.as_mut() } {
-        let info = framebuffer.info();
-        set_rect(Rect(0, 0, info.horizontal_resolution, info.vertical_resolution), color);
-    }
+pub unsafe fn clear_background() {
+    core::ptr::write_bytes(FB_START, 0x17, FB_ACTUAL_STRIDE * FRAMEBUFFER.as_ref().unwrap().info().vertical_resolution)
 }
 
-pub fn set_rect(rect: Rect, color: Color) {
-    if let Some(framebuffer) = unsafe { FRAMEBUFFER.as_mut() } {
-        let info = framebuffer.info();
-        let start_addr = unsafe { framebuffer.get_start_address() };
-        let color = color.to_pixel(info.pixel_format);
-        
-        for y in rect.1..(rect.1+rect.3) {
-            for x in rect.0..(rect.0+rect.2) {
-                unsafe {
-                    *((start_addr as usize + (y * info.bytes_per_pixel * info.stride + x * info.bytes_per_pixel)) as *mut [u8; 3]) = color;
-                }
-            }
+pub unsafe fn set_rect(color: u32, x: usize, y: usize, width: usize, height: usize) {
+    let framebuffer = FRAMEBUFFER.as_mut().unwrap();
+
+    for y in y..(y+height) {
+        for x in x..(x+width) {
+            ((FB_START as usize + y * FB_ACTUAL_STRIDE + x * FB_BPP) as *mut u32).write(color);
         }
     }
 }
 
-pub fn blit_art(x: usize, y: usize, data: &[u32], width: usize, height: usize) {
-    if let Some(framebuffer) = unsafe { FRAMEBUFFER.as_mut() } {
-        let info = framebuffer.info();
-        let start_addr = unsafe { framebuffer.get_start_address() };
+pub unsafe fn blit_image(data: &[u32], x: usize, y: usize, width: usize, height: usize) {
+    let framebuffer = FRAMEBUFFER.as_mut().unwrap();
 
-        let rows = unsafe{ data.as_chunks(width).map(|(c, _)|c as *[u32; width]).collect::<Vec<*[u32; width]>>() };
-
-        for y in y..(y+height) {
-    //         for x in x..(x+width) {
-    //             unsafe {
-    //                 *((start_addr as usize + (y * info.horizontal_resolution * info.stride + x * info.stride)) as *mut u32) = 0u32;
-    //             }
-    //         }
-    //         // buffer[(i * info.horizontal_resolution + x)..(i * info.horizontal_resolution + x + width)] = data[((i - y) * width)..((i - y) * width + width)];
-        }
+    for (i, y) in (y..(y+height)).enumerate() {
+        core::ptr::copy_nonoverlapping(&data[i * width] as *const u32, (FB_START as usize + y * FB_ACTUAL_STRIDE + x * FB_BPP) as *mut u32, width);
     }
 }

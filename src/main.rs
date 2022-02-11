@@ -7,8 +7,6 @@
 use bootloader::{boot_info::PixelFormat, entry_point, BootInfo};
 use core::panic::PanicInfo;
 
-use crate::cpu_renderer::{Color, Rect};
-
 pub mod cpu_renderer;
 pub mod serial;
 pub mod tests;
@@ -18,40 +16,35 @@ entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     unsafe {
-        let _ = cpu_renderer::FRAMEBUFFER.insert(boot_info.framebuffer.as_mut().unwrap());
-        let info = cpu_renderer::FRAMEBUFFER.as_ref().unwrap().info();
+        cpu_renderer::set_framebuffer(boot_info.framebuffer.as_mut().unwrap());
 
-        let pixel_format = match info.pixel_format {
-            PixelFormat::RGB => "RGB",
-            PixelFormat::BGR => "BGR",
-            PixelFormat::U8 => "U8 (Grayscale)",
-            other => panic!("Unrecognized pixel format: {:?}", other),
-        };
-        let bytes_per_pixel = info.bytes_per_pixel;
-        let width = info.horizontal_resolution;
-        let height = info.vertical_resolution;
+        #[cfg(test)]
+        test_main();
 
-        #[rustfmt::skip]
-        println!(concat!(   "===================================== \n",
-                            "  Display information                 \n",
-                            "===================================== \n",
-                            "  Resolution          | {}x{}         \n",
-                            "  Pixel format        | {}            \n",
-                            "  Bytes per pixel     | {}            \n",
-                            "===================================== \n"),
-                            width, height, pixel_format, bytes_per_pixel);
+        cpu_renderer::blit_image(data::PIXEL_ART, 0, 0, 32, 32);
+        cpu_renderer::set_rect(data::COLORS[data::RED], 48, 48, 64, 64);
+        cpu_renderer::blit_image(data::PIXEL_ART, 64, 64, 32, 32);
+
+        let mut frame: usize = 0;
+        let h_center = (cpu_renderer::FB_WIDTH / 2) as isize;
+        let v_center = (cpu_renderer::FB_HEIGHT / 2) as isize;
+        let mut x: f32 = 0.0;
+        loop {
+            cpu_renderer::clear_background();
+            for i in 0..100 {
+                cpu_renderer::blit_image(
+                    data::PIXEL_ART,
+                    (h_center + (libm::sinf(x.to_radians() + i as f32) * 200.0) as isize) as usize,
+                    (v_center + (libm::cosf(x.to_radians() + i as f32) * 200.0) as isize) as usize,
+                    32,
+                    32
+                );
+            }
+            x += 1.0;
+            frame += 1;
+            println!("Frame: {}", frame);
+        }
     }
-
-    #[cfg(test)]
-    test_main();
-
-    cpu_renderer::set_background(Color(0x17, 0x17, 0x17));
-    cpu_renderer::set_rect(Rect(150, 200, 300, 150), Color(0xda, 0x00, 0x37));
-    cpu_renderer::blit_art(0, 0, data::PIXEL_ART, 32, 32);
-
-    println!("Goodbye, {}!", "World");
-
-    loop {}
 }
 
 #[panic_handler]

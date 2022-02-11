@@ -1,4 +1,4 @@
-use crate::{println, print, cpu_renderer::{self, Color, Rect}};
+use crate::{println, print, cpu_renderer::self};
 
 pub fn exit_qemu(exit_code: u32) {
     use x86_64::instructions::port::Port;
@@ -77,7 +77,7 @@ fn check_set_background() {
 
 #[test_case]
 fn check_set_rect() {
-    cpu_renderer::set_rect(Rect(10, 10, 100, 100), Color(0xf3, 0x42, 0x13));
+    cpu_renderer::set_rect(data::COLORS[data::RED], 10, 10, 100, 100);
     let framebuffer = unsafe { cpu_renderer::FRAMEBUFFER.as_ref().unwrap() };
     match framebuffer.info().pixel_format {
         bootloader::boot_info::PixelFormat::RGB => {
@@ -85,9 +85,9 @@ fn check_set_rect() {
                 for col in 10..110 {
                     let pos = row * framebuffer.info().stride + col;
                     for byte in framebuffer.buffer().get((pos * framebuffer.info().bytes_per_pixel)..((pos+4) * framebuffer.info().bytes_per_pixel)) {
-                        assert!(byte[0] == 0xf3);
-                        assert!(byte[1] == 0x42);
-                        assert!(byte[2] == 0x13);
+                        assert!(byte[0] == 0xda);
+                        assert!(byte[1] == 0x00);
+                        assert!(byte[2] == 0x37);
                     }
                 }
             }
