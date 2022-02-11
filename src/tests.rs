@@ -12,7 +12,7 @@ pub fn exit_qemu(exit_code: u32) {
 #[cfg(test)]
 pub fn test_runner(tests: &[&dyn Testable]) {
     println!("Running {} tests", tests.len());
-    for (i, test) in tests.iter().enumerate() {
+    for (_i, test) in tests.iter().enumerate() {
         test.run();
     }
 

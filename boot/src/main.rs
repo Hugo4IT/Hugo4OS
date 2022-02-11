@@ -29,6 +29,12 @@ fn main() {
     }
 
     let mut run_cmd = Command::new("qemu-system-x86_64");
+    // if cfg!(target_arch = "aarch64") {
+    //     Command::new("qemu-system-aarch64")
+    // } else {
+    //     Command::new("qemu-system-x86_64")
+    // };
+
     run_cmd
         .arg("-drive")
         .arg(format!("format=raw,file={}", bios.display()));

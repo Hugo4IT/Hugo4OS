@@ -12,12 +12,13 @@ use crate::cpu_renderer::{Color, Rect};
 pub mod cpu_renderer;
 pub mod serial;
 pub mod tests;
+pub mod data;
 
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     unsafe {
-        cpu_renderer::FRAMEBUFFER.insert(boot_info.framebuffer.as_mut().unwrap());
+        let _ = cpu_renderer::FRAMEBUFFER.insert(boot_info.framebuffer.as_mut().unwrap());
         let info = cpu_renderer::FRAMEBUFFER.as_ref().unwrap().info();
 
         let pixel_format = match info.pixel_format {
@@ -46,6 +47,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
     cpu_renderer::set_background(Color(0x17, 0x17, 0x17));
     cpu_renderer::set_rect(Rect(150, 200, 300, 150), Color(0xda, 0x00, 0x37));
+    cpu_renderer::blit_art(0, 0, data::PIXEL_ART, 32, 32);
 
     println!("Goodbye, {}!", "World");
 

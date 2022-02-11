@@ -7,8 +7,8 @@ edition = "2021"
 members = ["boot"]
 
 [dependencies]
-lazy_static = { version = "1.*.*", features = ["spin_no_std"] }
-bootloader = "0.10.*"
-uart_16550 = "0.2.*"
-spin = "0.9.*"
-x86_64 = "*"
+lazy_static = { version = "1.4", features = ["spin_no_std"] }
+bootloader = "0.10"
+uart_16550 = "0.2"
+spin = "0.9"
+x86_64 = "0.14"
