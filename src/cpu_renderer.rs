@@ -11,6 +11,9 @@ pub static mut FB_START: *mut u8 = 0u8 as *mut u8;
 pub static mut FB_WIDTH: usize = 0;
 pub static mut FB_HEIGHT: usize = 0;
 
+// pub static mut BACKBUFFER: &mut [u8] = &mut [];
+// pub static mut BB_START: *mut u8 = 0u8 as *mut u8;
+
 pub unsafe fn set_framebuffer(fb: &'static mut FrameBuffer) {
     let info = fb.info();
     let pixel_format = match info.pixel_format {
@@ -115,23 +118,29 @@ pub unsafe fn ensure_format(data: &mut [u32], format: PixelFormat) {
 }
 
 pub unsafe fn clear_background() {
-    core::ptr::write_bytes(FB_START, 0x17, FB_ACTUAL_STRIDE * FRAMEBUFFER.as_ref().unwrap().info().vertical_resolution)
+    core::ptr::write_bytes(FB_START, 0x17, FB_ACTUAL_STRIDE * FB_HEIGHT)
 }
 
 pub unsafe fn set_rect(color: u32, x: usize, y: usize, width: usize, height: usize) {
-    let framebuffer = FRAMEBUFFER.as_mut().unwrap();
-
     for y in y..(y+height) {
         for x in x..(x+width) {
-            ((FB_START as usize + y * FB_ACTUAL_STRIDE + x * FB_BPP) as *mut u32).write(color);
+            get_pointer(x, y).write(color);
         }
     }
 }
 
 pub unsafe fn blit_image(data: &[u32], x: usize, y: usize, width: usize, height: usize) {
-    let framebuffer = FRAMEBUFFER.as_mut().unwrap();
-
     for (i, y) in (y..(y+height)).enumerate() {
-        core::ptr::copy_nonoverlapping(&data[i * width] as *const u32, (FB_START as usize + y * FB_ACTUAL_STRIDE + x * FB_BPP) as *mut u32, width);
+        core::ptr::copy_nonoverlapping(&data[i * width] as *const u32, get_pointer(x, y), width);
     }
+}
+
+#[inline]
+pub unsafe fn get_pointer(x: usize, y: usize) -> *mut u32 {
+    (FB_START as usize + y * FB_ACTUAL_STRIDE + x * FB_BPP) as *mut u32
+}
+
+#[inline]
+pub unsafe fn get_pixel(x: usize, y: usize) -> u32 {
+    *get_pointer(x, y)
 }

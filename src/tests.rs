@@ -1,4 +1,4 @@
-use crate::{println, print, cpu_renderer::self};
+use crate::{println, print, cpu_renderer, data};
 
 pub fn exit_qemu(exit_code: u32) {
     use x86_64::instructions::port::Port;
@@ -36,9 +36,18 @@ where
 }
 
 #[test_case]
-fn test_test_framework() {
+fn check_test_framework() {
     assert_eq!(1, 1);
 }
+
+// Interrupts
+
+#[test_case]
+fn check_crash_catch() {
+    x86_64::instructions::interrupts::int3();
+}
+
+// Rendering
 
 #[test_case]
 fn check_framebuffer_exists() {
@@ -47,75 +56,24 @@ fn check_framebuffer_exists() {
 
 #[test_case]
 fn check_set_background() {
-    cpu_renderer::set_background(Color(0xde, 0x91, 0x51));
-    let framebuffer = unsafe { cpu_renderer::FRAMEBUFFER.as_ref().unwrap() };
-    match framebuffer.info().pixel_format {
-        bootloader::boot_info::PixelFormat::RGB => {
-            for byte in framebuffer.buffer().chunks(framebuffer.info().bytes_per_pixel) {
-                assert!(byte[0] == 0xde);
-                assert!(byte[1] == 0x91);
-                assert!(byte[2] == 0x51);
+    unsafe {
+        cpu_renderer::clear_background();
+        for y in 0..cpu_renderer::FB_HEIGHT {
+            for x in 0..cpu_renderer::FB_WIDTH {
+                assert!(cpu_renderer::get_pixel(x, y) == 0x17171717);
             }
-        },
-        bootloader::boot_info::PixelFormat::BGR => {
-            for byte in framebuffer.buffer().chunks(framebuffer.info().bytes_per_pixel) {
-                assert!(byte[0] == 0x51);
-                assert!(byte[1] == 0x91);
-                assert!(byte[2] == 0xde);
-            }
-        },
-        bootloader::boot_info::PixelFormat::U8 => {
-            for byte in framebuffer.buffer().chunks(framebuffer.info().bytes_per_pixel) {
-                assert!(byte[0] == 0x95);
-                assert!(byte[1] == 0x95);
-                assert!(byte[2] == 0x95);
-            }
-        },
-        _ => unreachable!()
+        }
     }
 }
 
 #[test_case]
 fn check_set_rect() {
-    cpu_renderer::set_rect(data::COLORS[data::RED], 10, 10, 100, 100);
-    let framebuffer = unsafe { cpu_renderer::FRAMEBUFFER.as_ref().unwrap() };
-    match framebuffer.info().pixel_format {
-        bootloader::boot_info::PixelFormat::RGB => {
-            for row in 10..110 {
-                for col in 10..110 {
-                    let pos = row * framebuffer.info().stride + col;
-                    for byte in framebuffer.buffer().get((pos * framebuffer.info().bytes_per_pixel)..((pos+4) * framebuffer.info().bytes_per_pixel)) {
-                        assert!(byte[0] == 0xda);
-                        assert!(byte[1] == 0x00);
-                        assert!(byte[2] == 0x37);
-                    }
-                }
+    unsafe {
+        cpu_renderer::set_rect(data::COLORS[data::RED], 10, 10, 100, 100);
+        for y in 10..110 {
+            for x in 10..110 {
+                assert!(cpu_renderer::get_pixel(x, y) == data::COLORS[data::RED]);
             }
-        },
-        bootloader::boot_info::PixelFormat::BGR => {
-            for row in 10..110 {
-                for col in 10..110 {
-                    let pos = row * framebuffer.info().stride + col;
-                    for byte in framebuffer.buffer().get((pos * framebuffer.info().bytes_per_pixel)..((pos+4) * framebuffer.info().bytes_per_pixel)) {
-                        assert!(byte[0] == 0x13);
-                        assert!(byte[1] == 0x42);
-                        assert!(byte[2] == 0xf3);
-                    }
-                }
-            }
-        },
-        bootloader::boot_info::PixelFormat::U8 => {
-            for row in 10..110 {
-                for col in 10..110 {
-                    let pos = row * framebuffer.info().stride + col;
-                    for byte in framebuffer.buffer().get((pos * framebuffer.info().bytes_per_pixel)..((pos+4) * framebuffer.info().bytes_per_pixel)) {
-                        assert!(byte[0] == 0x6d);
-                        assert!(byte[1] == 0x6d);
-                        assert!(byte[2] == 0x6d);
-                    }
-                }
-            }
-        },
-        _ => unreachable!()
-    }
+        }
+    };
 }
