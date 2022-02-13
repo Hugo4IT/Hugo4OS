@@ -11,6 +11,6 @@ lazy_static = { version = "1.4", features = ["spin_no_std"] }
 bootloader = "0.10"
 uart_16550 = "0.2"
 pic8259 = "0.10"
-x86_64 = { version = "0.14", features = ["inline_asm"] }
+x86_64 = "0.14"
 spin = "0.9"
 libm = "0.2"
