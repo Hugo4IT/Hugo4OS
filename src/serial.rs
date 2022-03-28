@@ -25,5 +25,7 @@ macro_rules! print {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use fmt::Write;
-    SERIAL1.lock().write_fmt(args).expect("Printing to serial failed!");
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        SERIAL1.lock().write_fmt(args).expect("Printing to serial failed!");
+    })
 }
