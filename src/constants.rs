@@ -30,9 +30,11 @@ pub const HEAP_SIZE: usize = 100 * KiB;
 
 pub const RED: usize = 0;
 pub const BG: usize = 1;
+pub const FG: usize = 2;
 pub static mut COLORS: &mut [u32] = &mut [
     0xffda0037,
     0xff171717,
+    0xffd3d3d3,
 ];
 
 pub static mut PIXEL_ART: &mut [u32] = &mut [

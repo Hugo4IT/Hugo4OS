@@ -1,7 +1,7 @@
 use bootloader::boot_info::{FrameBuffer, PixelFormat};
 
-use crate::println;
 use crate::constants;
+use crate::println_verbose;
 
 pub static mut FRAMEBUFFER: Option<&'static mut FrameBuffer> = None;
 pub static mut FB_BPP: usize = 0;
@@ -14,27 +14,27 @@ pub static mut FB_HEIGHT: usize = 0;
 // pub static mut BACKBUFFER: &mut [u8] = &mut [];
 // pub static mut BB_START: *mut u8 = 0u8 as *mut u8;
 
-pub unsafe fn set_framebuffer(fb: &'static mut FrameBuffer) {
+pub unsafe fn init(fb: &'static mut FrameBuffer) {
     let info = fb.info();
-    let pixel_format = match info.pixel_format {
+    let _pixel_format = match info.pixel_format {
         PixelFormat::RGB => "RGB",
         PixelFormat::BGR => "BGR",
         PixelFormat::U8 => "U8 (Grayscale)",
         other => panic!("Unrecognized pixel format: {:?}", other),
     };
-    let bytes_per_pixel = info.bytes_per_pixel;
+    let _bytes_per_pixel = info.bytes_per_pixel;
     let width = info.horizontal_resolution;
     let height = info.vertical_resolution;
 
     #[rustfmt::skip]
-    println!(concat!(   "===================================== \n",
-                        "  Display information                 \n",
-                        "===================================== \n",
-                        "  Resolution          | {}x{}         \n",
-                        "  Pixel format        | {}            \n",
-                        "  Bytes per pixel     | {}            \n",
-                        "===================================== \n"),
-                        width, height, pixel_format, bytes_per_pixel);
+    println_verbose!(concat!(   "===================================== \n",
+                                "  Display information                 \n",
+                                "===================================== \n",
+                                "  Resolution          | {}x{}         \n",
+                                "  Pixel format        | {}            \n",
+                                "  Bytes per pixel     | {}            \n",
+                                "===================================== \n"),
+                                width, height, _pixel_format, _bytes_per_pixel);
     
     FB_BPP = info.bytes_per_pixel;
     FB_ACTUAL_STRIDE = FB_BPP * info.stride;
@@ -46,9 +46,27 @@ pub unsafe fn set_framebuffer(fb: &'static mut FrameBuffer) {
 
     clear_background();
 
-    println!("Loading images...");
+    // Draw splash screen
+
+    let center_x = width / 2;
+    let center_y = height / 2;
+
+    let logo_top = center_y - 100;
+    let logo_left = center_x - 100;
+    let logo_right = logo_left + 200;
+    let logo_bottom = logo_top + 200;
+
+
+    fill_rect(constants::COLORS[constants::RED], logo_left, logo_top, 200, 20);
+    fill_rect(constants::COLORS[constants::RED], logo_left, logo_bottom - 20, 200, 20);
+
+    fill_rect(constants::COLORS[constants::FG], logo_left + 50, center_y - 10, 100, 20);
+    fill_rect(constants::COLORS[constants::FG], logo_left + 50, logo_top + 40, 20, 120);
+    fill_rect(constants::COLORS[constants::FG], logo_right - 50 - 20, logo_top + 40, 20, 120);
+
+    println_verbose!("Loading images...");
     ensure_format(constants::PIXEL_ART, PixelFormat::RGB);
-    println!("Done loading...");
+    println_verbose!("Done loading...");
 }
 
 pub trait FrameBufferMakePublic {
@@ -121,7 +139,7 @@ pub unsafe fn clear_background() {
     core::ptr::write_bytes(FB_START, 0x17, FB_ACTUAL_STRIDE * FB_HEIGHT)
 }
 
-pub unsafe fn set_rect(color: u32, x: usize, y: usize, width: usize, height: usize) {
+pub unsafe fn fill_rect(color: u32, x: usize, y: usize, width: usize, height: usize) {
     for y in y..(y+height) {
         for x in x..(x+width) {
             get_pointer(x, y).write_volatile(color);

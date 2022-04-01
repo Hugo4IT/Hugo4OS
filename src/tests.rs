@@ -71,7 +71,7 @@ fn check_set_background() {
 #[test_case]
 fn check_set_rect() {
     unsafe {
-        cpu_renderer::set_rect(constants::COLORS[constants::RED], 10, 10, 100, 100);
+        cpu_renderer::fill_rect(constants::COLORS[constants::RED], 10, 10, 100, 100);
         for y in 10..110 {
             for x in 10..110 {
                 assert!(cpu_renderer::get_pixel(x, y) == constants::COLORS[constants::RED]);

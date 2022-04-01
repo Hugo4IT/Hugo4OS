@@ -38,46 +38,15 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(&boot_info.memory_regions) };
     let mut mapper = unsafe { memory::new_page_table(phys_mem_offset) };
 
+    // Initialize dynamic managed memory
     init_heap(&mut mapper, &mut frame_allocator).unwrap();
+
+    // Graphics drawing, show splash screen
+    unsafe { cpu_renderer::init(boot_info.framebuffer.as_mut().unwrap()) };
 
     let mut executor = Executor::new();
     executor.spawn(Task::new(task::keyboard::print_keypresses()));
     executor.run();
-
-    unsafe {
-        interrupts::with_disabled(||{
-            cpu_renderer::set_framebuffer(boot_info.framebuffer.as_mut().unwrap());
-    
-            #[cfg(test)]
-            test_main();
-    
-            cpu_renderer::blit_image(constants::PIXEL_ART, 0, 0, 32, 32);
-            cpu_renderer::set_rect(constants::COLORS[constants::RED], 48, 48, 64, 64);
-            cpu_renderer::blit_image(constants::PIXEL_ART, 64, 64, 32, 32);
-        });
-
-        // let mut frame: usize = 0;
-        // let h_center = (cpu_renderer::FB_WIDTH / 2) as isize;
-        // let v_center = (cpu_renderer::FB_HEIGHT / 2) as isize;
-        // let mut x: f32 = 0.0;
-        // loop {
-        //     cpu_renderer::clear_background();
-        //     for i in 0..100 {
-        //         cpu_renderer::blit_image(
-        //             data::PIXEL_ART,
-        //             (h_center + (libm::sinf(x.to_radians() + i as f32) * 200.0) as isize) as usize,
-        //             (v_center + (libm::cosf(x.to_radians() + i as f32) * 200.0) as isize) as usize,
-        //             32,
-        //             32
-        //         );
-        //     }
-        //     x += 1.0;
-        //     frame += 1;
-        //     println!("Frame: {}", frame);
-        // }
-    }
-    
-    utils::hlt_loop();
 }
 
 #[panic_handler]

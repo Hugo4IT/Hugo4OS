@@ -5,8 +5,6 @@ use x86_64::{structures::paging::{PageTable, OffsetPageTable, FrameAllocator, Si
 
 use crate::{ALLOCATOR, constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}, println_verbose};
 
-
-
 /// Wrapper to add trait implementation support.
 pub struct Locked<A>(spin::Mutex<A>);
 impl<A> Locked<A> {
