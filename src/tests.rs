@@ -1,4 +1,6 @@
-use crate::{println, print, cpu_renderer, data};
+use alloc::vec::Vec;
+
+use crate::{println, print, cpu_renderer, constants};
 
 pub fn exit_qemu(exit_code: u32) {
     use x86_64::instructions::port::Port;
@@ -69,11 +71,21 @@ fn check_set_background() {
 #[test_case]
 fn check_set_rect() {
     unsafe {
-        cpu_renderer::set_rect(data::COLORS[data::RED], 10, 10, 100, 100);
+        cpu_renderer::set_rect(constants::COLORS[constants::RED], 10, 10, 100, 100);
         for y in 10..110 {
             for x in 10..110 {
-                assert!(cpu_renderer::get_pixel(x, y) == data::COLORS[data::RED]);
+                assert!(cpu_renderer::get_pixel(x, y) == constants::COLORS[constants::RED]);
             }
         }
     };
+}
+
+#[test_case]
+fn large_vec() {
+    let n = 1000;
+    let mut vec = Vec::new();
+    for i in 0..n {
+        vec.push(i);
+    }
+    assert_eq!(vec.iter().sum::<u64>(), (n - 1) * n / 2);
 }

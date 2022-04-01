@@ -12,8 +12,48 @@ lazy_static! {
 }
 
 #[macro_export]
+macro_rules! println_verbose {
+    () => {
+        #[cfg(feature = "verbose")]
+        $crate::println!("\n");
+    };
+    ($($arg:tt)*) => {
+        #[cfg(feature = "verbose")]
+        $crate::print!("{}:{} [{}] {}\n", file!(), line!(), module_path!(), format_args!($($arg)*));
+    };
+}
+
+#[macro_export]
+macro_rules! print_verbose {
+    ($($arg:tt)*) => {
+        #[cfg(feature = "verbose")]
+        $crate::print!("{}:{} [{}] {}", file!(), line!(), module_path!(), format_args!($($arg)*));
+    };
+}
+
+#[macro_export]
+macro_rules! println_debug {
+    () => {
+        #[cfg(debug_assertions)]
+        println!("\n");
+    };
+    ($($arg:tt)*) => {
+        #[cfg(debug_assertions)]
+        $crate::println!($($arg)*);
+    };
+}
+
+#[macro_export]
+macro_rules! print_debug {
+    ($($arg:tt)*) => {
+        #[cfg(debug_assertions)]
+        $crate::print!($($arg)*);
+    };
+}
+
+#[macro_export]
 macro_rules! println {
-    () => (print!("\n"));
+    () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)))
 }
 

@@ -1,7 +1,7 @@
 use bootloader::boot_info::{FrameBuffer, PixelFormat};
 
 use crate::println;
-use crate::data;
+use crate::constants;
 
 pub static mut FRAMEBUFFER: Option<&'static mut FrameBuffer> = None;
 pub static mut FB_BPP: usize = 0;
@@ -47,7 +47,7 @@ pub unsafe fn set_framebuffer(fb: &'static mut FrameBuffer) {
     clear_background();
 
     println!("Loading images...");
-    ensure_format(data::PIXEL_ART, PixelFormat::RGB);
+    ensure_format(constants::PIXEL_ART, PixelFormat::RGB);
     println!("Done loading...");
 }
 
@@ -124,7 +124,7 @@ pub unsafe fn clear_background() {
 pub unsafe fn set_rect(color: u32, x: usize, y: usize, width: usize, height: usize) {
     for y in y..(y+height) {
         for x in x..(x+width) {
-            get_pointer(x, y).write(color);
+            get_pointer(x, y).write_volatile(color);
         }
     }
 }
@@ -135,7 +135,7 @@ pub unsafe fn blit_image(data: &[u32], x: usize, y: usize, width: usize, height:
     }
 }
 
-#[inline]
+#[inline(always)]
 pub unsafe fn get_pointer(x: usize, y: usize) -> *mut u32 {
     (FB_START as usize + y * FB_ACTUAL_STRIDE + x * FB_BPP) as *mut u32
 }
