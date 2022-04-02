@@ -59,15 +59,9 @@ impl Stream for ScancodeStream {
 
 pub async fn print_keypresses() {
     use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
-
+    
+    let mut keyboard = Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore);
     let mut scancodes = ScancodeStream::new();
-
-    lazy_static::lazy_static! {
-        static ref KEYBOARD: spin::Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
-            spin::Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore));
-    }
-
-    let mut keyboard = KEYBOARD.lock();
 
     while let Some(scancode) = scancodes.next().await {
         if let Ok(Some(keyevent)) = keyboard.add_byte(scancode) {

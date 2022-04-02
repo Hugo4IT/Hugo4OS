@@ -1,9 +1,9 @@
-use core::fmt;
+#[cfg(feature = "serial")] use core::fmt;
 
-use lazy_static::lazy_static;
-use uart_16550::SerialPort;
+#[cfg(feature = "serial")] use lazy_static::lazy_static;
+#[cfg(feature = "serial")] use uart_16550::SerialPort;
 
-lazy_static! {
+#[cfg(feature = "serial")] lazy_static! {
     pub static ref SERIAL1: spin::Mutex<SerialPort> = {
         let mut serial_port = unsafe { SerialPort::new(0x3F8) };
         serial_port.init();
@@ -57,12 +57,17 @@ macro_rules! println {
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)))
 }
 
-#[macro_export]
-macro_rules! print {
+#[cfg(feature = "serial")]
+#[macro_export] macro_rules! print {
     ($($arg:tt)*) => ($crate::serial::_print(format_args!($($arg)*)));
+}
+#[cfg(not(feature = "serial"))]
+#[macro_export] macro_rules! print {
+    ($($arg:tt)*) => {()};
 }
 
 #[doc(hidden)]
+#[cfg(feature = "serial")]
 pub fn _print(args: fmt::Arguments) {
     use fmt::Write;
     x86_64::instructions::interrupts::without_interrupts(|| {

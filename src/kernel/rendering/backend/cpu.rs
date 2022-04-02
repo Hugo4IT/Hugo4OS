@@ -1,7 +1,99 @@
+use alloc::vec::Vec;
 use bootloader::boot_info::{FrameBuffer, PixelFormat};
 
 use crate::constants;
 use crate::println_verbose;
+
+use backend::RenderBackend;
+
+pub struct CPURenderer {
+    buffer: Vec<u32>,
+    format: PixelFormat,
+    real_stride: usize,
+    stride: usize,
+    bpp: usize,
+    clear_color: u32,
+}
+
+impl CPURenderer {
+    pub fn new() -> CPURenderer {
+        CPURenderer {
+            buffer: Vec::new(),
+            format: PixelFormat::BGR,
+            real_stride: 0,
+            stride: 0,
+            bpp: 0,
+            clear_color: 0xff171717,
+        }
+    }
+}
+
+impl RenderBackend for CPURenderer {
+    fn init(&mut self, width: usize, height: usize, bytes_per_pixel: usize, stride: usize, format: PixelFormat) {
+        self.buffer.resize(stride * height, 0);
+        self.format = format;
+        self.stride = stride;
+        self.bpp = bytes_per_pixel;
+        self.real_stride = self.bpp * self.stride;
+    }
+
+    unsafe fn fill_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
+        let offset = x * self.bpp;
+        let start = y * self.real_stride;
+        let buffer = self.get_buffer_mut() as usize + start;
+
+        for y in 0..height {
+            for x in 0..width {
+                core::ptr::write((buffer + offset + x * self.bpp + y * self.real_stride) as *mut u32, color)
+            }
+        }
+    }
+
+    unsafe fn blit_texture(&mut self, x: usize, y: usize, width: usize, height: usize, texture: *const u32) {
+        let offset = x * self.bpp;
+        let start = y * self.real_stride;
+        let buffer = self.get_buffer_mut() as usize + start;
+
+        for y in 0..height {
+            core::ptr::copy_nonoverlapping(
+                (texture as usize + y * width) as *const u32,
+                (buffer + offset + y * self.real_stride) as *mut u32,
+                width,
+            )
+        }
+    }
+
+    fn set_clear_color(&mut self, color: u32) {
+        self.clear_color = color;
+    }
+
+    fn clear_screen(&mut self) {
+        let mut buffer = self.get_buffer_mut() as usize;
+        let end = self.buffer.len() * self.bpp + buffer;
+        while buffer <= end {
+            unsafe { core::ptr::write(buffer as *mut u32, self.clear_color) };
+            buffer += self.bpp;
+        }
+    }
+
+    fn get_buffer(&self) -> *const u8 {
+        self.buffer.as_ptr() as *const u8
+    }
+
+    fn get_buffer_mut(&mut self) -> *mut u8 {
+        self.buffer.as_mut_ptr() as *mut u8
+    }
+
+    unsafe fn put_pixel(&mut self, x: usize, y: usize, color: u32) {
+        let index = x * self.bpp + y * self.real_stride;
+        core::ptr::write((self.get_buffer_mut() as usize + index) as *mut u32, color)
+    }
+
+    unsafe fn get_pixel(&self, x: usize, y: usize) -> u32 {
+        let index = x * self.bpp + y * self.real_stride;
+        core::ptr::read((self.get_buffer() as usize + index) as *const u32)
+    }
+}
 
 pub static mut FRAMEBUFFER: Option<&'static mut FrameBuffer> = None;
 pub static mut FB_BPP: usize = 0;
@@ -26,15 +118,13 @@ pub unsafe fn init(fb: &'static mut FrameBuffer) {
     let width = info.horizontal_resolution;
     let height = info.vertical_resolution;
 
-    #[rustfmt::skip]
-    println_verbose!(concat!(   "===================================== \n",
-                                "  Display information                 \n",
-                                "===================================== \n",
-                                "  Resolution          | {}x{}         \n",
-                                "  Pixel format        | {}            \n",
-                                "  Bytes per pixel     | {}            \n",
-                                "===================================== \n"),
-                                width, height, _pixel_format, _bytes_per_pixel);
+    println_verbose!("=====================================");
+    println_verbose!("  Display information                ");
+    println_verbose!("=====================================");
+    println_verbose!("  Resolution          | {}x{}        ", width, height);
+    println_verbose!("  Pixel format        | {}           ", _pixel_format);
+    println_verbose!("  Bytes per pixel     | {}           ", _bytes_per_pixel);
+    println_verbose!("=====================================");
     
     FB_BPP = info.bytes_per_pixel;
     FB_ACTUAL_STRIDE = FB_BPP * info.stride;

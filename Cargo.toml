@@ -7,19 +7,21 @@ edition = "2021"
 members = ["boot"]
 
 [features]
-default = []
-verbose = []
+default = ["serial"]
+verbose = ["serial"]
+serial = ["uart_16550"]
 
 [dependencies]
 crossbeam-queue = { version = "0.3.5", default-features = false, features = ["alloc"] }
 futures-util = { version = "0.3.5", default-features = false, features = ["alloc"] }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 conquer-once = { version = "0.3.2", default-features = false }
+uart_16550 = { version = "0.2.17", optional = true }
 linked_list_allocator = "0.9.1"
 pc-keyboard = "0.5.1"
 bootloader = "0.10.12"
-uart_16550 = "0.2.17"
 pic8259 = "0.10.2"
+fontdue = "0.7.2"
 x86_64 = "0.14.8"
 spin = "0.9.2"
 libm = "0.2.2"

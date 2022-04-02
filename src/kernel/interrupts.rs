@@ -1,7 +1,7 @@
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
-use crate::{println, task};
+use crate::{println, task, kernel::gdt};
 use spin;
 
 pub use x86_64::instructions::interrupts::without_interrupts as with_disabled;
@@ -18,7 +18,7 @@ lazy_static! {
         unsafe {
             idt.double_fault
                 .set_handler_fn(double_fault_handler)
-                .set_stack_index(crate::global_desc_table::DOUBLE_FAULT_IST_INDEX);
+                .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         }
 
         idt[InterruptIndex::Timer as usize].set_handler_fn(timer_handler);

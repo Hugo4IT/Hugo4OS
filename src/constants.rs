@@ -21,7 +21,7 @@ pub const BLOCK_SIZES: &[usize] = &[8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 /// Start address for Dynamic Memory
 pub const HEAP_START: usize = 0x4444_4444_0000;
 /// Size of Dynamic Memory
-pub const HEAP_SIZE: usize = 100 * KiB;
+pub const HEAP_SIZE: usize = 1500 * KiB;
 
 
 ////////////////////////////////////////////////////////////////////////////////

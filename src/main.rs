@@ -7,42 +7,63 @@
 #![test_runner(crate::tests::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use memory::{BootInfoFrameAllocator, init_heap, Locked, FixedSizeBlockAllocator};
 use bootloader::{entry_point, BootInfo};
+use kernel::memory::{Locked, FixedSizeBlockAllocator};
 use task::{executor::Executor, Task};
-use x86_64::VirtAddr;
 use core::panic::PanicInfo;
+
+use crate::kernel::rendering::{Renderer, backend::cpu::CPURenderer};
 
 extern crate alloc;
 
 #[cfg(test)] pub mod tests;
 #[rustfmt::skip] pub mod constants;
 
-pub mod global_desc_table;
-pub mod cpu_renderer;
-pub mod interrupts;
-pub mod memory;
+pub mod kernel;
 pub mod serial;
-pub mod utils;
 pub mod task;
 
 #[global_allocator] pub static ALLOCATOR: Locked<FixedSizeBlockAllocator> = Locked::new(FixedSizeBlockAllocator::new());
 
 entry_point!(kernel_main);
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
-    global_desc_table::init();
-    interrupts::init();
-
+    println_verbose!("Starting Hugo4OS...");
+    
+    println_verbose!("Kernel");
+    println_verbose!("  GDT");
+    kernel::gdt::init();
+    
+    println_verbose!("  Interrupts");
+    kernel::interrupts::init();
+    
+    println_verbose!("  Memory management");
     let physical_memory_offset = boot_info.physical_memory_offset.into_option().unwrap();
-    let phys_mem_offset = VirtAddr::new(physical_memory_offset);
-    let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(&boot_info.memory_regions) };
-    let mut mapper = unsafe { memory::new_page_table(phys_mem_offset) };
+    kernel::memory::init(physical_memory_offset, &boot_info.memory_regions);
 
-    // Initialize dynamic managed memory
-    init_heap(&mut mapper, &mut frame_allocator).unwrap();
+    println_verbose!("CPU-based renderer");
 
-    // Graphics drawing, show splash screen
-    unsafe { cpu_renderer::init(boot_info.framebuffer.as_mut().unwrap()) };
+    let mut renderer = Renderer::new(boot_info.framebuffer.as_mut().unwrap(), CPURenderer::new());
+
+    // Display splash screen
+    
+    let center_x = renderer.get_width() / 2;
+    let center_y = renderer.get_height() / 2;
+    
+    let logo_top = center_y - 100;
+    let logo_left = center_x - 100;
+    let logo_right = logo_left + 200;
+    let logo_bottom = logo_top + 200;
+    
+    renderer.clear_screen();
+    
+    renderer.fill_rect(logo_left, logo_top, 200, 20, 0xffda0037);
+    renderer.fill_rect(logo_left, logo_bottom - 20, 200, 20, 0xffda0037);
+
+    renderer.fill_rect(logo_left + 50, center_y - 10, 100, 20, 0xffd3d3d3);
+    renderer.fill_rect(logo_left + 50, logo_top + 40, 20, 120, 0xffd3d3d3);
+    renderer.fill_rect(logo_right - 50 - 20, logo_top + 40, 20, 120, 0xffd3d3d3);
+
+    renderer.present();
 
     let mut executor = Executor::new();
     executor.spawn(Task::new(task::keyboard::print_keypresses()));
@@ -54,7 +75,9 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
 
-    utils::hlt_loop();
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 #[panic_handler]
@@ -63,7 +86,9 @@ fn panic(info: &PanicInfo) -> ! {
     println!("Failed!");
     println!("Error: {}", info);
     tests::exit_qemu(0x10);
-    utils::hlt_loop();
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 #[alloc_error_handler]

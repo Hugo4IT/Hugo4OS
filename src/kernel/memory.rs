@@ -5,6 +5,15 @@ use x86_64::{structures::paging::{PageTable, OffsetPageTable, FrameAllocator, Si
 
 use crate::{ALLOCATOR, constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}, println_verbose};
 
+pub fn init(physical_memory_offset: u64, memory_regions: &'static MemoryRegions) {
+    let phys_mem_offset = VirtAddr::new(physical_memory_offset);
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(memory_regions) };
+    let mut mapper = unsafe { new_page_table(phys_mem_offset) };
+
+    // Initialize dynamic managed memory
+    init_heap(&mut mapper, &mut frame_allocator).unwrap();
+}
+
 /// Wrapper to add trait implementation support.
 pub struct Locked<A>(spin::Mutex<A>);
 impl<A> Locked<A> {
@@ -40,6 +49,10 @@ pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static
 
     &mut *page_table_ptr
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// FrameAllocator                                                             //
+////////////////////////////////////////////////////////////////////////////////
 
 /// A FrameAllocator that always returns `None`.
 pub struct EmptyFrameAllocator;
