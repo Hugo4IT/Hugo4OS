@@ -27,7 +27,9 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
             buffer_info.pixel_format
         );
 
-        println_verbose!("  Font Rasterizer");
+        println_verbose!("  Font");
+
+        let font = FontRef::try_from_slice(constants::FONT_REGULAR).unwrap();
         
         println_verbose!("done");
 
@@ -35,7 +37,7 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
             backend,
             framebuffer,
             buffer_info,
-            font: FontRef::try_from_slice(constants::FONT_REGULAR).unwrap(),
+            font,
         }
     }
 
