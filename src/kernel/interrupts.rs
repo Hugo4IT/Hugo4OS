@@ -5,6 +5,8 @@ use crate::{println, task, kernel::gdt};
 use spin;
 
 pub use x86_64::instructions::interrupts::without_interrupts as with_disabled;
+pub use x86_64::instructions::interrupts::disable as disable;
+pub use x86_64::instructions::interrupts::enable as enable;
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -13,6 +15,7 @@ lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();
 
+        idt.simd_floating_point.set_handler_fn(simd_floating_point_handler);
         idt.breakpoint.set_handler_fn(breakpoint_handler);
         idt.page_fault.set_handler_fn(page_fault_handler);
         unsafe {
@@ -33,11 +36,15 @@ pub static PICS: spin::Mutex<ChainedPics> = spin::Mutex::new(unsafe { ChainedPic
 pub fn init() {
     IDT.load();
     unsafe { PICS.lock().initialize(); }
-    x86_64::instructions::interrupts::enable();
+    enable();
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+}
+
+extern "x86-interrupt" fn simd_floating_point_handler(stack_frame: InterruptStackFrame) {
+    println!("SIMD EXCEPTION: {:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, _error_code: u64) -> ! {

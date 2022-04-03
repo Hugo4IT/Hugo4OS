@@ -21,7 +21,7 @@ pub const BLOCK_SIZES: &[usize] = &[8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 /// Start address for Dynamic Memory
 pub const HEAP_START: usize = 0x4444_4444_0000;
 /// Size of Dynamic Memory
-pub const HEAP_SIZE: usize = 1500 * KiB;
+pub const HEAP_SIZE: usize = 5 * MiB;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,3 +71,7 @@ pub static mut PIXEL_ART: &mut [u32] = &mut [
     0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 
     0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d
 ];
+
+// pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Roboto/Roboto-Regular.ttf");
+pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Karla/static/Karla-Regular.otf");
+// pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/OpenDyslexic/OpenDyslexicMono Regular Nerd Font Complete Mono.otf");

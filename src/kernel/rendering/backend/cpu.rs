@@ -4,7 +4,7 @@ use bootloader::boot_info::{FrameBuffer, PixelFormat};
 use crate::constants;
 use crate::println_verbose;
 
-use backend::RenderBackend;
+use super::RenderBackend;
 
 pub struct CPURenderer {
     buffer: Vec<u32>,

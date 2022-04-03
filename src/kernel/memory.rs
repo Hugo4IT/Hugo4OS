@@ -9,7 +9,7 @@ pub fn init(physical_memory_offset: u64, memory_regions: &'static MemoryRegions)
     let phys_mem_offset = VirtAddr::new(physical_memory_offset);
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::new(memory_regions) };
     let mut mapper = unsafe { new_page_table(phys_mem_offset) };
-
+    
     // Initialize dynamic managed memory
     init_heap(&mut mapper, &mut frame_allocator).unwrap();
 }
@@ -198,7 +198,7 @@ unsafe impl GlobalAlloc for Locked<FixedSizeBlockAllocator> {
             }
             None => {
                 println_verbose!("Allocating {} bytes using fallback allocator.", layout.size());
-                
+                println_verbose!("Heap size: {}, free: {}, after alloc: {}", allocator.fallback_allocator.size(), allocator.fallback_allocator.free(), allocator.fallback_allocator.free() - layout.size());
                 allocator.fallback_alloc(layout)
             }
         }

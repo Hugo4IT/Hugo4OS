@@ -35,15 +35,18 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     
     println_verbose!("  Interrupts");
     kernel::interrupts::init();
+    kernel::interrupts::disable();
     
     println_verbose!("  Memory management");
     let physical_memory_offset = boot_info.physical_memory_offset.into_option().unwrap();
     kernel::memory::init(physical_memory_offset, &boot_info.memory_regions);
-
+    
     println_verbose!("CPU-based renderer");
-
+    
     let mut renderer = Renderer::new(boot_info.framebuffer.as_mut().unwrap(), CPURenderer::new());
 
+    println_verbose!("  Splash Screen");
+        
     // Display splash screen
     
     let center_x = renderer.get_width() / 2;
@@ -63,7 +66,12 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     renderer.fill_rect(logo_left + 50, logo_top + 40, 20, 120, 0xffd3d3d3);
     renderer.fill_rect(logo_right - 50 - 20, logo_top + 40, 20, 120, 0xffd3d3d3);
 
+    renderer.draw_char(0, 0, 'H', 32.0, 0xffd3d3d3);
+
     renderer.present();
+
+    println_verbose!("Enable interrupts");
+    kernel::interrupts::enable();
 
     let mut executor = Executor::new();
     executor.spawn(Task::new(task::keyboard::print_keypresses()));
@@ -94,4 +102,19 @@ fn panic(info: &PanicInfo) -> ! {
 #[alloc_error_handler]
 fn alloc_error(layout: alloc::alloc::Layout) -> ! {
     panic!("Allocation error: {:?}", layout);
+}
+
+// I have spent the past 8 F#@$&N HOURS trying to get
+// font rasterization to work, but it kept complaining
+// about libm and unkown symbols because I guess the
+// Rust linker is just complete wack. So I copied
+// the "unknown" functions from the libm source over
+// here with #[no_mangle], it finally works.
+
+#[no_mangle] pub fn fminf(x: f32, y: f32) -> f32 {
+    (if y.is_nan() || x < y { x } else { y }) * 1.0
+}
+
+#[no_mangle] pub fn fmaxf(x: f32, y: f32) -> f32 {
+    (if x.is_nan() || x < y { y } else { x }) * 1.0
 }
