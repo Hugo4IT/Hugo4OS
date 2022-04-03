@@ -73,5 +73,5 @@ pub static mut PIXEL_ART: &mut [u32] = &mut [
 ];
 
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Roboto/Roboto-Regular.ttf");
-pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Karla/static/Karla-Regular.otf");
+pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Karla/static/Karla-Regular.ttf");
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/OpenDyslexic/OpenDyslexicMono Regular Nerd Font Complete Mono.otf");

@@ -1,9 +1,9 @@
-use core::{alloc::{GlobalAlloc, Layout}, ptr::{self, NonNull}, mem};
+use core::{alloc::{GlobalAlloc, Layout}, ptr::{self, NonNull}};
 
 use bootloader::boot_info::{MemoryRegions, MemoryRegionKind};
 use x86_64::{structures::paging::{PageTable, OffsetPageTable, FrameAllocator, Size4KiB, PhysFrame, mapper::MapToError, Mapper, Page, PageTableFlags}, VirtAddr, PhysAddr};
 
-use crate::{ALLOCATOR, constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}, println_verbose};
+use crate::{ALLOCATOR, constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}};
 
 pub fn init(physical_memory_offset: u64, memory_regions: &'static MemoryRegions) {
     let phys_mem_offset = VirtAddr::new(physical_memory_offset);
@@ -179,16 +179,12 @@ unsafe impl GlobalAlloc for Locked<FixedSizeBlockAllocator> {
         let mut allocator = self.lock();
         match list_index(&layout) {
             Some(index) => {
-                println_verbose!("Allocating {} bytes using block of size {}.", layout.size(), BLOCK_SIZES[index]);
-
                 match allocator.list_heads[index].take() {
                     Some(node) => {
                         allocator.list_heads[index] = node.next.take();
                         node as *mut ListNode as *mut u8
                     }
                     None => { // If no block of the requested size exists, create it
-                        println_verbose!("Block doesn't exist yet, creating one.");
-
                         let block_size = BLOCK_SIZES[index];
                         let block_align = block_size; // Only works for powers of two
                         let layout = Layout::from_size_align(block_size, block_align).unwrap();
@@ -197,8 +193,6 @@ unsafe impl GlobalAlloc for Locked<FixedSizeBlockAllocator> {
                 }
             }
             None => {
-                println_verbose!("Allocating {} bytes using fallback allocator.", layout.size());
-                println_verbose!("Heap size: {}, free: {}, after alloc: {}", allocator.fallback_allocator.size(), allocator.fallback_allocator.free(), allocator.fallback_allocator.free() - layout.size());
                 allocator.fallback_alloc(layout)
             }
         }
@@ -208,22 +202,15 @@ unsafe impl GlobalAlloc for Locked<FixedSizeBlockAllocator> {
         let mut allocator = self.lock();
         match list_index(&layout) {
             Some(index) => {
-                println_verbose!("Deallocating block of size {} (used: {})", BLOCK_SIZES[index], layout.size());
-
                 let new_node = ListNode {
                     next: allocator.list_heads[index].take(),
                 };
-
-                debug_assert!(mem::size_of::<ListNode>() <= BLOCK_SIZES[index]);
-                debug_assert!(mem::align_of::<ListNode>() <= BLOCK_SIZES[index]);
 
                 let new_node_ptr = ptr as *mut ListNode;
                 new_node_ptr.write(new_node);
                 allocator.list_heads[index] = Some(&mut *new_node_ptr);
             }
             None => {
-                println_verbose!("Deallocating {} bytes using fallback allocator", layout.size());
-
                 let ptr = NonNull::new(ptr).unwrap();
                 allocator.fallback_allocator.deallocate(ptr, layout);
             }

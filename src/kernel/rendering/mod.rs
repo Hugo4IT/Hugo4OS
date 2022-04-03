@@ -1,5 +1,6 @@
-use ab_glyph::{FontRef, Font, OutlinedGlyph};
+use alloc::vec::Vec;
 use bootloader::boot_info::{FrameBuffer, FrameBufferInfo};
+use fontdue::{Font, FontSettings};
 
 use crate::{println_verbose, constants};
 
@@ -11,12 +12,12 @@ pub struct Renderer<'a, B: RenderBackend> {
     backend: B,
     framebuffer: &'a mut FrameBuffer,
     buffer_info: FrameBufferInfo,
-    font: FontRef<'a>,
+    font: Font,
 }
 
 impl<'a, B: RenderBackend> Renderer<'a, B> {
     pub fn new(framebuffer: &mut FrameBuffer, mut backend: B) -> Renderer<B> {
-        println_verbose!("  Backend");
+        println_verbose!("Backend");
 
         let buffer_info = framebuffer.info();
         backend.init(
@@ -27,9 +28,9 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
             buffer_info.pixel_format
         );
 
-        println_verbose!("  Font");
+        println_verbose!("Font");
 
-        let font = FontRef::try_from_slice(constants::FONT_REGULAR).unwrap();
+        let font = Font::from_bytes(constants::FONT_REGULAR, FontSettings::default()).unwrap();
         
         println_verbose!("done");
 
@@ -41,29 +42,16 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
         }
     }
 
-    unsafe fn blit_char(&mut self, x: usize, y: usize, glyph: OutlinedGlyph, color: u32) {
-        glyph.draw(|px, py, l| {
-            let l = (l * 255.0) as u32;
-            self.put_pixel_unchecked(px as usize + x, py as usize + y, ((l << 24) & 0xFF000000) | (color & 0x00FFFFFF))
-        });
-    }
-
     pub fn draw_char(&mut self, x: usize, y: usize, ch: char, size: f32, color: u32) {
-        let glyph = self.font.glyph_id(ch).with_scale(size);
-        let glyph = self.font.outline_glyph(glyph).unwrap();
-
-        assert!(glyph.px_bounds().min.x >= 0 as f32);
-        assert!(glyph.px_bounds().min.y >= 0 as f32);
-        assert!(glyph.px_bounds().max.x < self.get_width() as f32);
-        assert!(glyph.px_bounds().max.y < self.get_height() as f32);
-        
-        unsafe { self.blit_char(x, y, glyph, color) }
+        let (metrics, texture) = self.font.rasterize(ch, size);
+        let texture = texture.into_iter().map(|l| ((l as u32)<<24)|color).collect::<Vec<u32>>();
+        self.blit_texture(x, y, metrics.width, metrics.height, texture.as_ptr())
     }
 
     pub unsafe fn draw_char_unchecked(&mut self, x: usize, y: usize, ch: char, size: f32, color: u32) {
-        let glyph = self.font.glyph_id(ch).with_scale(size);
-        let glyph = self.font.outline_glyph(glyph).unwrap();
-        self.blit_char(x, y, glyph, color)
+        let (metrics, texture) = self.font.rasterize(ch, size);
+        let texture = texture.into_iter().map(|l| ((l as u32)<<24)|color).collect::<Vec<u32>>();
+        self.blit_texture_unchecked(x, y, metrics.width, metrics.height, texture.as_ptr())
     }
 
     #[inline]

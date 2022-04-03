@@ -30,14 +30,14 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     println_verbose!("Starting Hugo4OS...");
     
     println_verbose!("Kernel");
-    println_verbose!("  GDT");
+    println_verbose!("GDT");
     kernel::gdt::init();
     
-    println_verbose!("  Interrupts");
+    println_verbose!("Interrupts");
     kernel::interrupts::init();
     kernel::interrupts::disable();
     
-    println_verbose!("  Memory management");
+    println_verbose!("Memory management");
     let physical_memory_offset = boot_info.physical_memory_offset.into_option().unwrap();
     kernel::memory::init(physical_memory_offset, &boot_info.memory_regions);
     
@@ -45,7 +45,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     
     let mut renderer = Renderer::new(boot_info.framebuffer.as_mut().unwrap(), CPURenderer::new());
 
-    println_verbose!("  Splash Screen");
+    println_verbose!("Splash Screen");
         
     // Display splash screen
     
@@ -58,6 +58,8 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let logo_bottom = logo_top + 200;
     
     renderer.clear_screen();
+
+    renderer.present();
     
     renderer.fill_rect(logo_left, logo_top, 200, 20, 0xffda0037);
     renderer.fill_rect(logo_left, logo_bottom - 20, 200, 20, 0xffda0037);
