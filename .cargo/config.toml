@@ -1,5 +1,8 @@
 [target.'cfg(target_os = "none")']
 runner = "cargo run --package boot --bin boot --"
+rustflags = [
+    "-C", "link-arg=-zmax-page-size=0x1000"
+]
 
 [alias]
 kbuild = "build --target targets/x86_64-hugo4os.json -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem"

@@ -82,10 +82,9 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
         self.buffer_info.vertical_resolution
     }
 
-    #[inline]
     pub fn fill_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
-        assert!(x + width < self.buffer_info.horizontal_resolution);
-        assert!(y + height < self.buffer_info.vertical_resolution);
+        assert!(x + width <= self.buffer_info.horizontal_resolution);
+        assert!(y + height <= self.buffer_info.vertical_resolution);
         unsafe { self.fill_rect_unchecked(x, y, width, height, color) }
     }
 
@@ -95,9 +94,28 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
     }
 
     #[inline]
+    pub unsafe fn blit_image<I: Image>(&mut self, x: usize, y: usize, image: &I) {
+        self.blit_texture(x, y, image.get_width(), image.get_height(), image.get_texture().as_slice())
+    }
+
+    #[inline]
+    pub unsafe fn blit_image_unchecked<I: Image>(&mut self, x: usize, y: usize, image: &I) {
+        self.blit_texture_unchecked(x, y, image.get_width(), image.get_height(), image.get_texture().as_slice())
+    }
+
+    #[inline]
+    pub fn blit_image_blend<I: Image>(&mut self, x: usize, y: usize, image: &I) {
+        self.blit_texture_blend(x, y, image.get_width(), image.get_height(), image.get_texture().as_slice())
+    }
+
+    #[inline]
+    pub unsafe fn blit_image_blend_unchecked<I: Image>(&mut self, x: usize, y: usize, image: &I) {
+        self.blit_texture_blend_unchecked(x, y, image.get_width(), image.get_height(), image.get_texture().as_slice())
+    }
+
     pub fn blit_texture(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
-        assert!(x + width < self.buffer_info.horizontal_resolution);
-        assert!(y + height < self.buffer_info.vertical_resolution);
+        assert!(x + width <= self.buffer_info.horizontal_resolution);
+        assert!(y + height <= self.buffer_info.vertical_resolution);
         unsafe { self.blit_texture_unchecked(x, y, width, height, texture) }
     }
 
@@ -106,10 +124,9 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
         self.backend.blit_texture(x, y, width, height, texture)
     }
 
-    #[inline]
     pub fn blit_texture_blend(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
-        assert!(x + width < self.buffer_info.horizontal_resolution);
-        assert!(y + height < self.buffer_info.vertical_resolution);
+        assert!(x + width <= self.buffer_info.horizontal_resolution);
+        assert!(y + height <= self.buffer_info.vertical_resolution);
         unsafe { self.blit_texture_blend_unchecked(x, y, width, height, texture) }
     }
 
@@ -118,7 +135,6 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
         self.backend.blit_texture_blend(x, y, width, height, texture)
     }
 
-    #[inline]
     pub fn set_pixel(&mut self, x: usize, y: usize, color: u32) {
         assert!(x <= self.buffer_info.horizontal_resolution);
         assert!(y <= self.buffer_info.vertical_resolution);
@@ -130,7 +146,6 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
         self.backend.set_pixel(x, y, color)
     }
 
-    #[inline]
     pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
         assert!(x <= self.buffer_info.horizontal_resolution);
         assert!(y <= self.buffer_info.vertical_resolution);
@@ -170,4 +185,10 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
 
         unsafe { core::ptr::copy(bb_start, fb_start, stride * height * bpp) };
     }
+}
+
+pub trait Image {
+    fn get_width(&self) -> usize;
+    fn get_height(&self) -> usize;
+    fn get_texture(&self) -> Vec<u32>;
 }

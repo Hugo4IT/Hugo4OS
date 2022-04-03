@@ -12,3 +12,7 @@ Me just experimenting with OS development in rust
 - Running unit tests: `cargo ktest`
 
 Big thanks to [Philipp Oppermann](https://os.phil-opp.com/)
+
+## Screenshot
+
+![wowie](./.github/screenshots/screenshot-2022-04-03_19-03-52.png)

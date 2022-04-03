@@ -13,13 +13,14 @@ use kernel::memory::{Locked, FixedSizeBlockAllocator};
 use task::{executor::Executor, Task};
 use core::panic::PanicInfo;
 
-use crate::kernel::rendering::{Renderer, backend::cpu::CPURenderer};
+use crate::{kernel::rendering::{Renderer, backend::cpu::CPURenderer}, loaders::image::tga::TGAImageFile};
 
 extern crate alloc;
 
 #[cfg(test)] pub mod tests;
 #[rustfmt::skip] pub mod constants;
 
+pub mod loaders;
 pub mod kernel;
 pub mod serial;
 pub mod task;
@@ -61,7 +62,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let scale_texture = |tex: &[u32], width: usize, scale: usize| -> Vec<u32> {
         tex
             .to_vec()
-            .windows(width)
+            .chunks(width)
             .flat_map(|row| {
                 let row_scaled = row
                     .into_iter()
@@ -93,8 +94,6 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     renderer.fill_rect(0, 192, 64, 64, renderer.blend_colors(0x88171717, 0x88da0037));
     renderer.fill_rect(64, 192, 64, 64, 0xffda0037);
 
-    renderer.set_pixel(550, 370, 0xffda0037);
-
     let colors = [
         0x11171717,
         0x88da0037,
@@ -113,6 +112,10 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
         renderer.fill_rect(48, 256 + i * 16, 16, 16, a);
     }
 
+    renderer.present();
+
+    let test_image = TGAImageFile::from_bytes(constants::TGA_TEST_IMAGE).unwrap();
+    renderer.blit_image_blend(renderer.get_width()-400, renderer.get_height()-400, &test_image);
     renderer.present();
 
     println_verbose!("Enable interrupts");

@@ -6,8 +6,8 @@ use crate::constants;
 use super::RenderBackend;
 
 macro_rules! color_expr {
-    (mul $x:expr, $y:expr) => ((constants::COLOR_MULT_LOOKUP_TABLE[(($x) * 255 + ($y)) as usize] as u32));
-    (div $x:expr, $y:expr) => ((constants::COLOR_DIV_LOOKUP_TABLE[(($x) * 255 + ($y)) as usize] as u32));
+    (mul $x:expr, $y:expr) => ((u16::from_le_bytes([constants::COLOR_MULT_LOOKUP_TABLE[(($x) * 256 + ($y)) as usize * 2], constants::COLOR_MULT_LOOKUP_TABLE[(($x) * 256 + ($y)) as usize * 2 + 1]]) as u32));
+    (div $x:expr, $y:expr) => ((u16::from_le_bytes([constants::COLOR_DIV_LOOKUP_TABLE[(($x) * 256 + ($y)) as usize * 2], constants::COLOR_DIV_LOOKUP_TABLE[(($x) * 256 + ($y)) as usize * 2 + 1]]) as u32));
 }
 
 pub struct CPURenderer {
@@ -133,7 +133,7 @@ impl RenderBackend for CPURenderer {
             // let value_g = (fg_g * fg_a + bg_g * bg_a * (1.0 - fg_a)) / value_a;
             // let value_b = (fg_b * fg_a + bg_b * bg_a * (1.0 - fg_a)) / value_a;
 
-            let value_a = fg_a + color_expr!(mul bg_a, (255 - fg_a)) as u32;
+            let value_a = fg_a + color_expr!(mul bg_a, (255 - fg_a));
             let value_r = color_expr!(div color_expr!(mul fg_r, fg_a) + color_expr!(mul color_expr!(mul bg_r, bg_a), (255 - fg_a)), value_a);
             let value_g = color_expr!(div color_expr!(mul fg_g, fg_a) + color_expr!(mul color_expr!(mul bg_g, bg_a), (255 - fg_a)), value_a);
             let value_b = color_expr!(div color_expr!(mul fg_b, fg_a) + color_expr!(mul color_expr!(mul bg_b, bg_a), (255 - fg_a)), value_a);

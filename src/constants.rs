@@ -21,7 +21,7 @@ pub const BLOCK_SIZES: &[usize] = &[8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 /// Start address for Dynamic Memory
 pub const HEAP_START: usize = 0x4444_4444_0000;
 /// Size of Dynamic Memory
-pub const HEAP_SIZE: usize = 10 * MiB;
+pub const HEAP_SIZE: usize = 50 * MiB;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,10 +76,12 @@ pub static PIXEL_ART: &[u32] = &[
     0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d
 ];
 
+pub const TGA_TEST_IMAGE: &[u8; 640018] = include_bytes!("../res/images/tga-test.tga");
+
 pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Roboto/Roboto-Regular.ttf");
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Karla/static/Karla-Regular.ttf");
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/OpenDyslexic/OpenDyslexicMono Regular Nerd Font Complete Mono.otf");
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/JetBrainsMono/JetBrains Mono Regular Nerd Font Complete Mono.ttf");
 
-pub const COLOR_DIV_LOOKUP_TABLE: &[u8; 65536] = include_bytes!("../res/generated/color-div-lookup-table.bin");
-pub const COLOR_MULT_LOOKUP_TABLE: &[u8; 65536] = include_bytes!("../res/generated/color-mult-lookup-table.bin");
+pub const COLOR_DIV_LOOKUP_TABLE: &[u8; 131072] = include_bytes!("../res/generated/color-div-lookup-table.bin");
+pub const COLOR_MULT_LOOKUP_TABLE: &[u8; 131072] = include_bytes!("../res/generated/color-mult-lookup-table.bin");
