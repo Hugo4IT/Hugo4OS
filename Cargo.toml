@@ -29,3 +29,6 @@ libm = "0.2.1"
 
 [package.metadata.bootloader]
 map-physical-memory = true
+
+[profile.dev]
+opt-level = 1 # Initial boot is incredibly slow on opt-level=0

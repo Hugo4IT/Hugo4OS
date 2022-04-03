@@ -58,8 +58,6 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let logo_bottom = logo_top + 200;
     
     renderer.clear_screen();
-
-    renderer.present();
     
     renderer.fill_rect(logo_left, logo_top, 200, 20, 0xffda0037);
     renderer.fill_rect(logo_left, logo_bottom - 20, 200, 20, 0xffda0037);
@@ -68,7 +66,8 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     renderer.fill_rect(logo_left + 50, logo_top + 40, 20, 120, 0xffd3d3d3);
     renderer.fill_rect(logo_right - 50 - 20, logo_top + 40, 20, 120, 0xffd3d3d3);
 
-    renderer.draw_char(0, 0, 'H', 32.0, 0xffd3d3d3);
+    renderer.blit_texture_blend(128, 0, 32, 32, unsafe { constants::PIXEL_ART });
+    renderer.draw_char(0, 0, 'G', 128.0, 0xffd3d3d3);
 
     renderer.present();
 

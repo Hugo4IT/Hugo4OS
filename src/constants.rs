@@ -72,6 +72,26 @@ pub static mut PIXEL_ART: &mut [u32] = &mut [
     0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d, 0xffce562d
 ];
 
-// pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Roboto/Roboto-Regular.ttf");
-pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Karla/static/Karla-Regular.ttf");
+pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Roboto/Roboto-Regular.ttf");
+// pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Karla/static/Karla-Regular.ttf");
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/OpenDyslexic/OpenDyslexicMono Regular Nerd Font Complete Mono.otf");
+// pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/JetBrainsMono/JetBrains Mono Regular Nerd Font Complete Mono.ttf");
+
+/// Lookup table for any integer (0..=254) divided by 255.0f32
+/// 
+/// Generated with:
+/// 
+/// ```py
+/// for i in range(255):  ")
+///     print(float(i)/255.0, end=",\n    ")
+/// ```
+/// 
+/// alternative:
+/// 
+/// ```py
+/// for i in range(255):
+///     for j in range(255):
+///             print(int(float(i)/255.0*float(j)), end=",")
+///     print()
+/// ```
+pub const LERP_LOOKUP_TABLE: &[u8; 65025] = include_bytes!("../res/generated/lerp-lookup-table.bin");

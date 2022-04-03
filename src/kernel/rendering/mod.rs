@@ -44,14 +44,14 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
 
     pub fn draw_char(&mut self, x: usize, y: usize, ch: char, size: f32, color: u32) {
         let (metrics, texture) = self.font.rasterize(ch, size);
-        let texture = texture.into_iter().map(|l| ((l as u32)<<24)|color).collect::<Vec<u32>>();
-        self.blit_texture(x, y, metrics.width, metrics.height, texture.as_ptr())
+        let texture = texture.into_iter().map(|l| (((l as u32)<<24)&0xFFFFFFFF)|(color&0x00FFFFFF)).collect::<Vec<u32>>();
+        self.blit_texture_blend(x, y, metrics.width, metrics.height, texture.as_slice())
     }
 
     pub unsafe fn draw_char_unchecked(&mut self, x: usize, y: usize, ch: char, size: f32, color: u32) {
         let (metrics, texture) = self.font.rasterize(ch, size);
-        let texture = texture.into_iter().map(|l| ((l as u32)<<24)|color).collect::<Vec<u32>>();
-        self.blit_texture_unchecked(x, y, metrics.width, metrics.height, texture.as_ptr())
+        let texture = texture.into_iter().map(|l| ((l as u32)<<24)|(color&0x00FFFFFF)).collect::<Vec<u32>>();
+        self.blit_texture_blend_unchecked(x, y, metrics.width, metrics.height, texture.as_slice())
     }
 
     #[inline]
@@ -77,15 +77,27 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
     }
 
     #[inline]
-    pub fn blit_texture(&mut self, x: usize, y: usize, width: usize, height: usize, texture: *const u32) {
+    pub fn blit_texture(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
         assert!(x + width < self.buffer_info.horizontal_resolution);
         assert!(y + height < self.buffer_info.vertical_resolution);
         unsafe { self.blit_texture_unchecked(x, y, width, height, texture) }
     }
 
     #[inline]
-    pub unsafe fn blit_texture_unchecked(&mut self, x: usize, y: usize, width: usize, height: usize, texture: *const u32) {
+    pub unsafe fn blit_texture_unchecked(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
         self.backend.blit_texture(x, y, width, height, texture)
+    }
+
+    #[inline]
+    pub fn blit_texture_blend(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
+        assert!(x + width < self.buffer_info.horizontal_resolution);
+        assert!(y + height < self.buffer_info.vertical_resolution);
+        unsafe { self.blit_texture_blend_unchecked(x, y, width, height, texture) }
+    }
+
+    #[inline]
+    pub unsafe fn blit_texture_blend_unchecked(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
+        self.backend.blit_texture_blend(x, y, width, height, texture)
     }
 
     #[inline]
