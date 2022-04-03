@@ -21,7 +21,7 @@ pub const BLOCK_SIZES: &[usize] = &[8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 /// Start address for Dynamic Memory
 pub const HEAP_START: usize = 0x4444_4444_0000;
 /// Size of Dynamic Memory
-pub const HEAP_SIZE: usize = 5 * MiB;
+pub const HEAP_SIZE: usize = 10 * MiB;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,11 @@ pub static mut COLORS: &mut [u32] = &mut [
     0xffd3d3d3,
 ];
 
-pub static mut PIXEL_ART: &mut [u32] = &mut [
+pub static ALPHA_BLEND_TEST: &[u32] = &[
+    0x00FFFFFF, 0x11FFFFFF, 0x22FFFFFF, 0x33FFFFFF, 0x44FFFFFF, 0x55FFFFFF, 0x66FFFFFF, 0x77FFFFFF, 0x88FFFFFF, 0x99FFFFFF, 0xAAFFFFFF, 0xBBFFFFFF, 0xCCFFFFFF, 0xDDFFFFFF, 0xEEFFFFFF, 0xFFFFFFFF,
+    0x00FF0000, 0x11FF0000, 0x22FF0000, 0x33FF0000, 0x44FF0000, 0x55FF0000, 0x66FF0000, 0x77FF0000, 0x88FF0000, 0x99FF0000, 0xAAFF0000, 0xBBFF0000, 0xCCFF0000, 0xDDFF0000, 0xEEFF0000, 0xFFFF0000,
+];
+pub static PIXEL_ART: &[u32] = &[
     0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 
     0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 
     0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 0xffce791e, 
@@ -77,21 +81,5 @@ pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/Roboto/Roboto-Regu
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/OpenDyslexic/OpenDyslexicMono Regular Nerd Font Complete Mono.otf");
 // pub static FONT_REGULAR: &[u8] = include_bytes!("../res/fonts/JetBrainsMono/JetBrains Mono Regular Nerd Font Complete Mono.ttf");
 
-/// Lookup table for any integer (0..=254) divided by 255.0f32
-/// 
-/// Generated with:
-/// 
-/// ```py
-/// for i in range(255):  ")
-///     print(float(i)/255.0, end=",\n    ")
-/// ```
-/// 
-/// alternative:
-/// 
-/// ```py
-/// for i in range(255):
-///     for j in range(255):
-///             print(int(float(i)/255.0*float(j)), end=",")
-///     print()
-/// ```
-pub const LERP_LOOKUP_TABLE: &[u8; 65025] = include_bytes!("../res/generated/lerp-lookup-table.bin");
+pub const COLOR_DIV_LOOKUP_TABLE: &[u8; 65536] = include_bytes!("../res/generated/color-div-lookup-table.bin");
+pub const COLOR_MULT_LOOKUP_TABLE: &[u8; 65536] = include_bytes!("../res/generated/color-mult-lookup-table.bin");

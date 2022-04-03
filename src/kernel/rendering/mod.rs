@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 use bootloader::boot_info::{FrameBuffer, FrameBufferInfo};
-use fontdue::{Font, FontSettings};
+use fontdue::{Font, FontSettings, layout::{Layout, CoordinateSystem, TextStyle}};
 
 use crate::{println_verbose, constants};
 
@@ -12,7 +12,7 @@ pub struct Renderer<'a, B: RenderBackend> {
     backend: B,
     framebuffer: &'a mut FrameBuffer,
     buffer_info: FrameBufferInfo,
-    font: Font,
+    fonts: Vec<Font>,
 }
 
 impl<'a, B: RenderBackend> Renderer<'a, B> {
@@ -38,20 +38,38 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
             backend,
             framebuffer,
             buffer_info,
-            font,
+            fonts: Vec::from(&[font]),
         }
     }
 
+    fn convert_glyph_texture(&self, texture: Vec<u8>, color: u32) -> Vec<u32> {
+        texture.into_iter().map(|l| ((l as u32)<<24)|(color&0x00FFFFFF)).collect::<Vec<u32>>()
+    }
+
     pub fn draw_char(&mut self, x: usize, y: usize, ch: char, size: f32, color: u32) {
-        let (metrics, texture) = self.font.rasterize(ch, size);
-        let texture = texture.into_iter().map(|l| (((l as u32)<<24)&0xFFFFFFFF)|(color&0x00FFFFFF)).collect::<Vec<u32>>();
-        self.blit_texture_blend(x, y, metrics.width, metrics.height, texture.as_slice())
+        let (metrics, texture) = self.fonts[0].rasterize(ch, size);
+        self.blit_texture_blend(x, y, metrics.width, metrics.height, self.convert_glyph_texture(texture, color).as_slice())
     }
 
     pub unsafe fn draw_char_unchecked(&mut self, x: usize, y: usize, ch: char, size: f32, color: u32) {
-        let (metrics, texture) = self.font.rasterize(ch, size);
-        let texture = texture.into_iter().map(|l| ((l as u32)<<24)|(color&0x00FFFFFF)).collect::<Vec<u32>>();
-        self.blit_texture_blend_unchecked(x, y, metrics.width, metrics.height, texture.as_slice())
+        let (metrics, texture) = self.fonts[0].rasterize(ch, size);
+        self.blit_texture_blend_unchecked(x, y, metrics.width, metrics.height, self.convert_glyph_texture(texture, color).as_slice())
+    }
+
+    pub fn draw_string(&mut self, x: usize, y: usize, string: &str, size: f32, color: u32) {
+        let mut layout = Layout::new(CoordinateSystem::PositiveYDown);
+        layout.append(self.fonts.as_slice(), &TextStyle::new(string, size, 0));
+
+        for glyph in layout.glyphs() {
+            let (metrics, texture) = self.fonts[glyph.font_index].rasterize_config(glyph.key);
+            self.blit_texture_blend(
+                x + glyph.x as usize,
+                y + glyph.y as usize,
+                metrics.width,
+                metrics.height,
+                self.convert_glyph_texture(texture, color).as_slice()
+            )
+        }
     }
 
     #[inline]
@@ -101,15 +119,15 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
     }
 
     #[inline]
-    pub fn put_pixel(&mut self, x: usize, y: usize, color: u32) {
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: u32) {
         assert!(x <= self.buffer_info.horizontal_resolution);
         assert!(y <= self.buffer_info.vertical_resolution);
-        unsafe { self.put_pixel_unchecked(x, y, color) }
+        unsafe { self.set_pixel_unchecked(x, y, color) }
     }
 
     #[inline]
-    pub unsafe fn put_pixel_unchecked(&mut self, x: usize, y: usize, color: u32) {
-        self.backend.put_pixel(x, y, color)
+    pub unsafe fn set_pixel_unchecked(&mut self, x: usize, y: usize, color: u32) {
+        self.backend.set_pixel(x, y, color)
     }
 
     #[inline]
@@ -124,6 +142,11 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
         self.backend.get_pixel(x, y)
     }
     
+    #[inline]
+    pub fn blend_colors(&self, x: u32, y: u32) -> u32 {
+        self.backend.overlay_color(x, y)
+    }
+
     #[inline]
     pub fn set_clear_color(&mut self, color: u32) {
         self.backend.set_clear_color(color)
