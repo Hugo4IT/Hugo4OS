@@ -13,6 +13,7 @@ Me just experimenting with OS development in rust
 
 Big thanks to [Philipp Oppermann](https://os.phil-opp.com/)
 
-## Screenshot
+## Showcase
 
-![wowie](./.github/screenshots/screenshot-2022-04-03_19-03-52.png)
+![wowie](./.github/showcase/screenshot-2022-04-03_19-03-52.png)
+![wowie2](./.github/showcase/Hugo4OS.mp4)

@@ -12,7 +12,7 @@ pub struct Renderer<'a, B: RenderBackend> {
     backend: B,
     framebuffer: &'a mut FrameBuffer,
     buffer_info: FrameBufferInfo,
-    fonts: Vec<Font>,
+    pub fonts: Vec<Font>,
 }
 
 impl<'a, B: RenderBackend> Renderer<'a, B> {

@@ -117,37 +117,13 @@ impl RenderBackend for CPURenderer {
         } else if fg_a == 255 {
             foreground
         } else {
-            // let (fg_r, fg_g, fg_b, fg_a) = (fg_r as f32 / 255.0, fg_g as f32 / 255.0, fg_b as f32 / 255.0, fg_a as f32 / 255.0);
-            // let (bg_r, bg_g, bg_b, bg_a) = (bg_r as f32 / 255.0, bg_g as f32 / 255.0, bg_b as f32 / 255.0, bg_a as f32 / 255.0);
             let (fg_r, fg_g, fg_b, fg_a) = (fg_r as u32, fg_g as u32, fg_b as u32, fg_a as u32);
             let (bg_r, bg_g, bg_b, bg_a) = (bg_r as u32, bg_g as u32, bg_b as u32, bg_a as u32);
-
-            // let (value_r, value_g, value_b) = (
-            //     if bg_red <= 127 { 2 * fg_red * bg_red } else { 255 - 2 * (255 - bg_red) * (255 - fg_red) },
-            //     if bg_green <= 127 { 2 * fg_green * bg_green } else { 255 - 2 * (255 - bg_green) * (255 - fg_green) },
-            //     if bg_blue <= 127 { 2 * fg_blue * bg_blue } else { 255 - 2 * (255 - bg_blue) * (255 - fg_blue) },
-            // );
-
-            // let value_a = fg_a + bg_a * (1.0 - fg_a);
-            // let value_r = (fg_r * fg_a + bg_r * bg_a * (1.0 - fg_a)) / value_a;
-            // let value_g = (fg_g * fg_a + bg_g * bg_a * (1.0 - fg_a)) / value_a;
-            // let value_b = (fg_b * fg_a + bg_b * bg_a * (1.0 - fg_a)) / value_a;
 
             let value_a = fg_a + color_expr!(mul bg_a, (255 - fg_a));
             let value_r = color_expr!(div color_expr!(mul fg_r, fg_a) + color_expr!(mul color_expr!(mul bg_r, bg_a), (255 - fg_a)), value_a);
             let value_g = color_expr!(div color_expr!(mul fg_g, fg_a) + color_expr!(mul color_expr!(mul bg_g, bg_a), (255 - fg_a)), value_a);
             let value_b = color_expr!(div color_expr!(mul fg_b, fg_a) + color_expr!(mul color_expr!(mul bg_b, bg_a), (255 - fg_a)), value_a);
-
-            // let fg_r = constants::COLOR_MULT_LOOKUP_TABLE[(fg_a * 255 + fg_r - 254) as usize];
-            // let fg_g = constants::COLOR_MULT_LOOKUP_TABLE[(fg_a * 255 + fg_g - 254) as usize];
-            // let fg_b = constants::COLOR_MULT_LOOKUP_TABLE[(fg_a * 255 + fg_b - 254) as usize];
-            // let bg_r = constants::COLOR_MULT_LOOKUP_TABLE[(fg_a * 255 + bg_r - 254) as usize];
-            // let bg_g = constants::COLOR_MULT_LOOKUP_TABLE[(fg_a * 255 + bg_g - 254) as usize];
-            // let bg_b = constants::COLOR_MULT_LOOKUP_TABLE[(fg_a * 255 + bg_b - 254) as usize];
-
-            // let value_r = (fg_r as u32 + bg_r as u32).max(255) as u8;
-            // let value_g = (fg_g as u32 + bg_g as u32).max(255) as u8;
-            // let value_b = (fg_b as u32 + bg_b as u32).max(255) as u8;
 
             u32::from_le_bytes([value_b.min(255) as u8, value_g.min(255) as u8, value_r.min(255) as u8, value_a.min(255) as u8])
         }

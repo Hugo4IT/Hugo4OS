@@ -9,11 +9,12 @@
 
 use alloc::vec::Vec;
 use bootloader::{entry_point, BootInfo};
+use fontdue::{Font, FontSettings};
 use kernel::memory::{Locked, FixedSizeBlockAllocator};
 use task::{executor::Executor, Task};
 use core::panic::PanicInfo;
 
-use crate::{kernel::rendering::{Renderer, backend::cpu::CPURenderer}, loaders::image::tga::TGAImageFile};
+use crate::kernel::rendering::{Renderer, backend::cpu::CPURenderer};
 
 extern crate alloc;
 
@@ -86,36 +87,12 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     renderer.fill_rect(logo_left + 50, logo_top + 40, 20, 120, 0xffd3d3d3);
     renderer.fill_rect(logo_right - 50 - 20, logo_top + 40, 20, 120, 0xffd3d3d3);
 
-    renderer.blit_texture_blend(160, 0, 160, 20, scale_texture(constants::ALPHA_BLEND_TEST, 16, 10).as_slice());
-    renderer.blit_texture_blend(128, 0, 32, 32, constants::PIXEL_ART);
-    renderer.draw_char(0, 0, 'G', 128.0, 0xffd3d3d3);
-    renderer.draw_string(0, 128, "Hugo4IT", 64.0, 0xffd3d3d3);
-
-    renderer.fill_rect(0, 192, 64, 64, renderer.blend_colors(0x88171717, 0x88da0037));
-    renderer.fill_rect(64, 192, 64, 64, 0xffda0037);
-
-    let colors = [
-        0x11171717,
-        0x88da0037,
-        renderer.blend_colors(0x11171717, 0x88da0037),
-        renderer.get_pixel(64, 192)
-    ];
-    for (i, color) in colors.into_iter().enumerate() {
-        let [r, g, b, a] = color.to_le_bytes();
-        let r = u32::from_le_bytes([r, r, r, r]);
-        let g = u32::from_le_bytes([g, g, g, g]);
-        let b = u32::from_le_bytes([b, b, b, b]);
-        let a = u32::from_le_bytes([a, a, a, a]);
-        renderer.fill_rect(0, 256 + i * 16, 16, 16, r);
-        renderer.fill_rect(16, 256 + i * 16, 16, 16, g);
-        renderer.fill_rect(32, 256 + i * 16, 16, 16, b);
-        renderer.fill_rect(48, 256 + i * 16, 16, 16, a);
-    }
-
+    renderer.draw_string(0, renderer.get_height() - 96, "Loading...", 64.0, 0xffd3d3d3);
     renderer.present();
 
-    let test_image = TGAImageFile::from_bytes(constants::TGA_TEST_IMAGE).unwrap();
-    renderer.blit_image_blend(renderer.get_width()-400, renderer.get_height()-400, &test_image);
+    renderer.fonts.push(Font::from_bytes(constants::FONT_NERD_MONO, FontSettings::default()).unwrap());
+
+    renderer.clear_screen();
     renderer.present();
 
     println_verbose!("Enable interrupts");

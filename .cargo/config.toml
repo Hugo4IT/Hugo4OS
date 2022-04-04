@@ -6,7 +6,7 @@ rustflags = [
 
 [alias]
 kbuild = "build --target targets/x86_64-hugo4os.json -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem"
-kimage = "run --target targets/x86_64-hugo4os.json -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem -- --no-run"
+kimage = "run --release --target targets/x86_64-hugo4os.json -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem -- --no-run"
 krun = "run --target targets/x86_64-hugo4os.json -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem"
 ktest = "test --target targets/x86_64-hugo4os.json -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem"
 kcheck = "check --target targets/x86_64-hugo4os.json -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem"
