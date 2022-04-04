@@ -16,4 +16,6 @@ Big thanks to [Philipp Oppermann](https://os.phil-opp.com/)
 ## Showcase
 
 ![wowie](./.github/showcase/screenshot-2022-04-03_19-03-52.png)
-![wowie2](./.github/showcase/Hugo4OS.mp4)
+
+
+https://user-images.githubusercontent.com/48245742/161477623-4e3c07cb-3731-45eb-ac30-6e9032fa7e2b.mp4
