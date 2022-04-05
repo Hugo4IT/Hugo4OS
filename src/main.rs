@@ -91,18 +91,3 @@ fn panic(info: &PanicInfo) -> ! {
 fn alloc_error(layout: alloc::alloc::Layout) -> ! {
     panic!("Allocation error: {:?}", layout);
 }
-
-// I have spent the past 8 F#@$&N HOURS trying to get
-// font rasterization to work, but it kept complaining
-// about libm and unkown symbols because I guess the
-// Rust linker is just complete wack. So I copied
-// the "unknown" functions from the libm source over
-// here with #[no_mangle], it finally works.
-
-#[no_mangle] pub fn fminf(x: f32, y: f32) -> f32 {
-    (if y.is_nan() || x < y { x } else { y }) * 1.0
-}
-
-#[no_mangle] pub fn fmaxf(x: f32, y: f32) -> f32 {
-    (if x.is_nan() || x < y { y } else { x }) * 1.0
-}
