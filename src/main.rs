@@ -54,7 +54,7 @@ fn kernel_main<F: FrameBuffer>(framebuffer: &mut F) -> ! {
     renderer.present();
 
     renderer.fonts.push(Font::from_bytes(constants::FONT_REGULAR, FontSettings::default()).unwrap());
-    // renderer.fonts.push(Font::from_bytes(constants::FONT_NERD_MONO, FontSettings::default()).unwrap());
+    renderer.fonts.push(Font::from_bytes(constants::FONT_NERD_MONO, FontSettings::default()).unwrap());
 
     renderer.clear_screen();
     renderer.present();
