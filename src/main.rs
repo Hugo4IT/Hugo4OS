@@ -7,16 +7,14 @@
 #![test_runner(crate::tests::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use alloc::vec::Vec;
-use bootloader::{entry_point, BootInfo};
-use fontdue::{Font, FontSettings};
-use kernel::memory::{Locked, FixedSizeBlockAllocator};
-use task::{executor::Executor, Task};
+extern crate alloc;
+
 use core::panic::PanicInfo;
 
-use crate::kernel::rendering::{Renderer, backend::cpu::CPURenderer};
+use fontdue::{Font, FontSettings};
 
-extern crate alloc;
+use kernel::{abstractions::FrameBuffer, rendering::{Renderer, backend::cpu::CPURenderer}};
+use task::{executor::Executor, Task};
 
 #[cfg(test)] pub mod tests;
 #[rustfmt::skip] pub mod constants;
@@ -24,31 +22,15 @@ extern crate alloc;
 pub mod loaders;
 pub mod kernel;
 pub mod serial;
+pub mod arch;
 pub mod task;
+pub mod util;
 
-#[global_allocator] pub static ALLOCATOR: Locked<FixedSizeBlockAllocator> = Locked::new(FixedSizeBlockAllocator::new());
+// These functions will call `kernel_main` when done
+#[cfg(target_arch = "x86_64")] bootloader::entry_point!(arch::_x86_64::init);
 
-entry_point!(kernel_main);
-fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
-    println_verbose!("Starting Hugo4OS...");
-    
-    println_verbose!("Kernel");
-    println_verbose!("GDT");
-    kernel::gdt::init();
-    
-    println_verbose!("Interrupts");
-    kernel::interrupts::init();
-    kernel::interrupts::disable();
-    
-    println_verbose!("Memory management");
-    let physical_memory_offset = boot_info.physical_memory_offset.into_option().unwrap();
-    kernel::memory::init(physical_memory_offset, &boot_info.memory_regions);
-    
-    println_verbose!("CPU-based renderer");
-    
-    let mut renderer = Renderer::new(boot_info.framebuffer.as_mut().unwrap(), CPURenderer::new());
-
-    println_verbose!("Splash Screen");
+fn kernel_main<F: FrameBuffer>(framebuffer: &mut F) -> ! {
+    let mut renderer = Renderer::new(framebuffer, CPURenderer::new());
         
     // Display splash screen
     
@@ -59,24 +41,6 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let logo_left = center_x - 100;
     let logo_right = logo_left + 200;
     let logo_bottom = logo_top + 200;
-
-    let scale_texture = |tex: &[u32], width: usize, scale: usize| -> Vec<u32> {
-        tex
-            .to_vec()
-            .chunks(width)
-            .flat_map(|row| {
-                let row_scaled = row
-                    .into_iter()
-                    // Repeat each pixel {scale} times
-                    .flat_map(|pixel| (0..scale).map(|_|*pixel))
-                    .collect::<Vec<_>>();
-
-                (0..scale)
-                    // Repeat each row {scale} times
-                    .flat_map(move |_| row_scaled.clone())
-            })
-            .collect::<Vec<u32>>()
-    };
     
     renderer.clear_screen();
     
@@ -87,15 +51,14 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     renderer.fill_rect(logo_left + 50, logo_top + 40, 20, 120, 0xffd3d3d3);
     renderer.fill_rect(logo_right - 50 - 20, logo_top + 40, 20, 120, 0xffd3d3d3);
 
-    renderer.draw_string(0, renderer.get_height() - 96, "Loading...", 64.0, 0xffd3d3d3);
     renderer.present();
 
-    renderer.fonts.push(Font::from_bytes(constants::FONT_NERD_MONO, FontSettings::default()).unwrap());
+    renderer.fonts.push(Font::from_bytes(constants::FONT_REGULAR, FontSettings::default()).unwrap());
+    // renderer.fonts.push(Font::from_bytes(constants::FONT_NERD_MONO, FontSettings::default()).unwrap());
 
     renderer.clear_screen();
     renderer.present();
 
-    println_verbose!("Enable interrupts");
     kernel::interrupts::enable();
 
     let mut executor = Executor::new();

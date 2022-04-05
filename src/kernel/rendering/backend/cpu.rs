@@ -1,7 +1,6 @@
 use alloc::vec::Vec;
-use bootloader::boot_info::{FrameBuffer, PixelFormat};
 
-use crate::constants;
+use crate::{constants, kernel::abstractions::PixelFormat};
 
 use super::RenderBackend;
 
@@ -35,7 +34,7 @@ impl CPURenderer {
 impl RenderBackend for CPURenderer {
     fn init(
         &mut self,
-        width: usize,
+        _width: usize,
         height: usize,
         bytes_per_pixel: usize,
         stride: usize,
@@ -158,15 +157,5 @@ impl RenderBackend for CPURenderer {
     unsafe fn get_pixel(&self, x: usize, y: usize) -> u32 {
         let index = x * self.bpp + y * self.real_stride;
         core::ptr::read((self.get_buffer() as usize + index) as *const u32)
-    }
-}
-
-pub trait FrameBufferMakePublic {
-    unsafe fn get_start_address(&mut self) -> *mut u8;
-}
-
-impl FrameBufferMakePublic for FrameBuffer {
-    unsafe fn get_start_address(&mut self) -> *mut u8 {
-        self.buffer_mut().get_unchecked_mut(0) as *mut u8
     }
 }

@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 
-use crate::{println, print, cpu_renderer, constants};
+use crate::{println, print, CPURenderer, constants};
 
 pub fn exit_qemu(exit_code: u32) {
     use x86_64::instructions::port::Port;

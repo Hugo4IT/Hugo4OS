@@ -1,4 +1,4 @@
-use bootloader::boot_info::PixelFormat;
+use crate::kernel::abstractions::PixelFormat;
 
 pub mod cpu;
 

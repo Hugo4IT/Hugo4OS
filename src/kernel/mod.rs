@@ -1,10 +1,3 @@
-use bootloader::BootInfo;
-
-pub mod interrupts;
+pub mod abstractions;
 pub mod rendering;
-pub mod memory;
-pub mod gdt;
-
-pub trait Kernel {
-    fn init(&mut self, boot_info: &'static BootInfo);
-}
+pub mod interrupts;

@@ -1,44 +1,36 @@
-use alloc::vec::Vec;
-use bootloader::boot_info::{FrameBuffer, FrameBufferInfo};
-use fontdue::{Font, FontSettings, layout::{Layout, CoordinateSystem, TextStyle}};
-
-use crate::{println_verbose, constants};
-
-use self::backend::{RenderBackend, cpu::FrameBufferMakePublic};
+//! Generic renderer with a target framebuffer and a backend.
 
 pub mod backend;
 
-pub struct Renderer<'a, B: RenderBackend> {
+use alloc::vec::Vec;
+use fontdue::{Font, layout::{Layout, CoordinateSystem, TextStyle}};
+
+use crate::{loaders::image::Image, kernel::abstractions::{FrameBuffer, FrameBufferInfo}};
+use backend::RenderBackend;
+
+pub struct Renderer<'a, F: FrameBuffer, B: RenderBackend> {
     backend: B,
-    framebuffer: &'a mut FrameBuffer,
+    framebuffer: &'a mut F,
     buffer_info: FrameBufferInfo,
     pub fonts: Vec<Font>,
 }
 
-impl<'a, B: RenderBackend> Renderer<'a, B> {
-    pub fn new(framebuffer: &mut FrameBuffer, mut backend: B) -> Renderer<B> {
-        println_verbose!("Backend");
-
+impl<'a, F: FrameBuffer, B: RenderBackend> Renderer<'a, F, B> {
+    pub fn new(framebuffer: &mut F, mut backend: B) -> Renderer<F, B> {
         let buffer_info = framebuffer.info();
         backend.init(
-            buffer_info.horizontal_resolution,
-            buffer_info.vertical_resolution,
+            buffer_info.width,
+            buffer_info.height,
             buffer_info.bytes_per_pixel,
             buffer_info.stride,
             buffer_info.pixel_format
         );
 
-        println_verbose!("Font");
-
-        let font = Font::from_bytes(constants::FONT_REGULAR, FontSettings::default()).unwrap();
-        
-        println_verbose!("done");
-
         Renderer {
             backend,
             framebuffer,
             buffer_info,
-            fonts: Vec::from(&[font]),
+            fonts: Vec::new(),
         }
     }
 
@@ -74,17 +66,17 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
 
     #[inline]
     pub fn get_width(&self) -> usize {
-        self.buffer_info.horizontal_resolution
+        self.buffer_info.width
     }
 
     #[inline]
     pub fn get_height(&self) -> usize {
-        self.buffer_info.vertical_resolution
+        self.buffer_info.height
     }
 
     pub fn fill_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
-        assert!(x + width <= self.buffer_info.horizontal_resolution);
-        assert!(y + height <= self.buffer_info.vertical_resolution);
+        assert!(x + width <= self.buffer_info.width);
+        assert!(y + height <= self.buffer_info.height);
         unsafe { self.fill_rect_unchecked(x, y, width, height, color) }
     }
 
@@ -114,8 +106,8 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
     }
 
     pub fn blit_texture(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
-        assert!(x + width <= self.buffer_info.horizontal_resolution);
-        assert!(y + height <= self.buffer_info.vertical_resolution);
+        assert!(x + width <= self.buffer_info.width);
+        assert!(y + height <= self.buffer_info.height);
         unsafe { self.blit_texture_unchecked(x, y, width, height, texture) }
     }
 
@@ -125,8 +117,8 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
     }
 
     pub fn blit_texture_blend(&mut self, x: usize, y: usize, width: usize, height: usize, texture: &[u32]) {
-        assert!(x + width <= self.buffer_info.horizontal_resolution);
-        assert!(y + height <= self.buffer_info.vertical_resolution);
+        assert!(x + width <= self.buffer_info.width);
+        assert!(y + height <= self.buffer_info.height);
         unsafe { self.blit_texture_blend_unchecked(x, y, width, height, texture) }
     }
 
@@ -136,8 +128,8 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
     }
 
     pub fn set_pixel(&mut self, x: usize, y: usize, color: u32) {
-        assert!(x <= self.buffer_info.horizontal_resolution);
-        assert!(y <= self.buffer_info.vertical_resolution);
+        assert!(x <= self.buffer_info.width);
+        assert!(y <= self.buffer_info.height);
         unsafe { self.set_pixel_unchecked(x, y, color) }
     }
 
@@ -147,8 +139,8 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
     }
 
     pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
-        assert!(x <= self.buffer_info.horizontal_resolution);
-        assert!(y <= self.buffer_info.vertical_resolution);
+        assert!(x <= self.buffer_info.width);
+        assert!(y <= self.buffer_info.height);
         unsafe { self.get_pixel_unchecked(x, y) }
     }
 
@@ -177,18 +169,12 @@ impl<'a, B: RenderBackend> Renderer<'a, B> {
         // Backbuffer
         let bb_start = self.backend.get_buffer();
         // Framebuffer
-        let fb_start = unsafe { self.framebuffer.get_start_address() };
+        let fb_start = self.framebuffer.get_start_address();
 
         let stride = self.buffer_info.stride;
-        let height = self.buffer_info.vertical_resolution;
+        let height = self.buffer_info.height;
         let bpp = self.buffer_info.bytes_per_pixel;
 
         unsafe { core::ptr::copy(bb_start, fb_start, stride * height * bpp) };
     }
-}
-
-pub trait Image {
-    fn get_width(&self) -> usize;
-    fn get_height(&self) -> usize;
-    fn get_texture(&self) -> Vec<u32>;
 }

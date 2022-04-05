@@ -3,7 +3,7 @@ use std::{
     process::Command,
 };
 
-const RUN_ARGS: &[&str] = &["--no-reboot", "-s", "-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio", "-cpu", "max", "-m", "4096", "-accel", "tcg,tb-size=1024"];
+const RUN_ARGS: &[&str] = &["--no-reboot", "-s", "-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio", "-cpu", "max,+sse", "-m", "4096", "-accel", "tcg,tb-size=1024"];
 
 fn main() {
     let mut args = std::env::args().skip(1); // skip executable name

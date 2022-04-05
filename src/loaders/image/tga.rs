@@ -2,7 +2,7 @@ use core::slice::Iter;
 
 use alloc::vec::Vec;
 
-use crate::kernel::rendering::Image;
+use super::Image;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TGAImageParsingError {
