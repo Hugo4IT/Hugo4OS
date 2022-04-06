@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 
-use crate::{constants, kernel::abstractions::PixelFormat};
+use crate::{constants, kernel::abstractions::rendering::PixelFormat};
 
 use super::RenderBackend;
 

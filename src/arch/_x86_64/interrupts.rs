@@ -4,6 +4,7 @@ use lazy_static::lazy_static;
 use pic8259::ChainedPics;
 use spin;
 
+use crate::kernel::abstractions;
 use crate::{println, kernel};
 
 pub use x86_64::instructions::interrupts::without_interrupts as with_disabled;
@@ -29,6 +30,7 @@ lazy_static! {
         idt[InterruptIndex::Timer as usize].set_handler_fn(timer_handler);
         idt[InterruptIndex::Keyboard as usize].set_handler_fn(keyboard_handler);
         idt[InterruptIndex::RealTimeClock as usize].set_handler_fn(realtime_clock_handler);
+        idt[InterruptIndex::Syscall as usize].set_handler_fn(syscall_handler);
 
         idt
     };
@@ -54,6 +56,36 @@ pub fn init() {
     enable();
 }
 
+#[derive(Debug, Clone, Copy)]
+#[repr(u8)]
+pub enum InterruptIndex {
+    Timer = PIC_1_OFFSET,           // Handled
+    Keyboard,                       // Handled
+    SecondaryPIC,
+    SerialPort2,
+    SerialPort1,
+    ParallelPort2_3,
+    FloppyDisk,
+    ParallelPort1,
+
+    // Start second PIC
+
+    RealTimeClock = PIC_2_OFFSET,   // Handled
+    ACPI,
+    Available1,
+    Available2,
+    Mouse,                          // TODO: Handle mouse IRQ
+    CoProcessor,
+    PrimaryATA,
+    SecondaryATA,
+
+    // Start custom interrupts
+
+    Syscall = 0x80,                 // Same address as linux for compatability
+}
+
+// Exceptions
+
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
@@ -78,29 +110,7 @@ extern "x86-interrupt" fn page_fault_handler(
     println!("{:#?}", stack_frame);
 }
 
-#[derive(Debug, Clone, Copy)]
-#[repr(u8)]
-pub enum InterruptIndex {
-    Timer = PIC_1_OFFSET,           // Handled
-    Keyboard,                       // Handled
-    SecondaryPIC,
-    SerialPort2,
-    SerialPort1,
-    ParallelPort2_3,
-    FloppyDisk,
-    ParallelPort1,
-
-    // Start second PIC
-
-    RealTimeClock = PIC_2_OFFSET,   // Handled
-    ACPI,
-    Available1,
-    Available2,
-    Mouse,                          // TODO: Handle mouse IRQ
-    CoProcessor,
-    PrimaryATA,
-    SecondaryATA,
-}
+// Interrupt vectors
 
 extern "x86-interrupt" fn timer_handler(_stack_frame: InterruptStackFrame) {
     kernel::interrupts::timer();
@@ -134,5 +144,82 @@ extern "x86-interrupt" fn realtime_clock_handler(_stack_frame: InterruptStackFra
         let _: u8 = d_port.read();
         
         PICS.lock().notify_end_of_interrupt(InterruptIndex::RealTimeClock as u8)
+    }
+}
+
+extern "x86-interrupt" fn syscall_handler(_stack_frame: InterruptStackFrame) {
+    let regs = unsafe {
+        let mut r15: u64;
+        let mut r14: u64;
+        let mut r13: u64;
+        let mut r12: u64;
+        let mut r11: u64;
+        let mut r10: u64;
+        let mut r9: u64;
+        let mut r8: u64;
+        let mut eax: u64;
+        let mut rcx: u64;
+        let mut rdx: u64;
+        let mut rsi: u64;
+        core::arch::asm!(
+            "",
+            out("rsi") rsi,
+            out("rdx") rdx,
+            out("rcx") rcx,
+            out("eax") eax, // Specifies which syscall to run, and will be reused as a pointer to return value
+            out("r8") r8,
+            out("r9") r9,
+            out("r10") r10,
+            out("r11") r11,
+            out("r12") r12,
+            out("r13") r13,
+            out("r14") r14,
+            out("r15") r15,
+            options(nomem, nostack)
+        );
+        let eax = eax as *mut u64;
+
+        SyscallRegs { r15, r14, r13, r12, r11, r10, r9, r8, eax, rcx, rdx, rsi }
+    };
+
+    let result = kernel::interrupts::syscall(regs.into());
+    unsafe { core::ptr::write(regs.eax, result) }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct SyscallRegs {
+    pub r15: u64,
+    pub r14: u64,
+    pub r13: u64,
+    pub r12: u64,
+    pub r11: u64,
+    pub r10: u64,
+    pub r9: u64,
+    pub r8: u64,
+    pub eax: *mut u64,
+    pub rcx: u64,
+    pub rdx: u64,
+    pub rsi: u64,
+}
+
+impl Into<abstractions::interrupts::InputSyscall> for SyscallRegs {
+    fn into(self) -> abstractions::interrupts::InputSyscall {
+        abstractions::interrupts::InputSyscall {
+            args: [
+                self.rsi,
+                self.rdx,
+                self.rcx,
+                self.r8,
+                self.r9,
+                self.r10,
+                self.r11,
+                self.r12,
+                self.r13,
+                self.r14,
+                self.r15,
+            ],
+            target: self.eax,
+        }
     }
 }

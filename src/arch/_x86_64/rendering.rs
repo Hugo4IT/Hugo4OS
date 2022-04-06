@@ -1,6 +1,6 @@
 use bootloader::boot_info;
 
-use crate::kernel::abstractions;
+use crate::kernel::abstractions::rendering as abstractions;
 
 pub trait FrameBufferMakePublic {
     unsafe fn get_start_address(&self) -> *const u8;

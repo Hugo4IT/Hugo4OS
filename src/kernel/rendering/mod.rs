@@ -5,7 +5,7 @@ pub mod backend;
 use alloc::vec::Vec;
 use fontdue::{Font, layout::{Layout, CoordinateSystem, TextStyle}};
 
-use crate::{loaders::image::Image, kernel::abstractions::{FrameBuffer, FrameBufferInfo}};
+use crate::{loaders::image::Image, kernel::abstractions::rendering::{FrameBuffer, FrameBufferInfo}};
 use backend::RenderBackend;
 
 pub struct Renderer<'a, F: FrameBuffer, B: RenderBackend> {

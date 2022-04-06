@@ -1,4 +1,4 @@
-use crate::kernel::abstractions::PixelFormat;
+use crate::kernel::abstractions::rendering::PixelFormat;
 
 pub mod cpu;
 
