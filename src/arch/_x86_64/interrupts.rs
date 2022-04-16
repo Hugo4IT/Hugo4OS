@@ -147,6 +147,13 @@ extern "x86-interrupt" fn realtime_clock_handler(_stack_frame: InterruptStackFra
     }
 }
 
+/// The x86_64 implementation of syscalls
+/// 
+/// Receives `int 0x80` (most probably called from [`hugo4os_syscall::syscall!`]).
+/// It then puts all the parameters (stored in 12 CPU registers) in variables
+/// and executes [`kernel::interrupts::syscall`] (abstraction). It then takes the
+/// return value from that function, and writes it to the pointer specified in
+/// the `eax` register (also used to specify which syscall to run).
 extern "x86-interrupt" fn syscall_handler(_stack_frame: InterruptStackFrame) {
     let regs = unsafe {
         let mut r15: u64;
