@@ -8,7 +8,7 @@ pub trait StreamWrite {
 }
 
 pub trait StreamRead {
-    fn read(&mut self, count: usize) -> &[u8];
+    fn read(&mut self, count: usize) -> Vec<u8>;
 }
 
 pub struct Stream {
@@ -32,13 +32,13 @@ impl StreamWrite for Stream {
 }
 
 impl StreamRead for Stream {
-    fn read(&mut self, count: usize) -> &[u8] {
+    fn read(&mut self, count: usize) -> Vec<u8> {
         let mut buffer: Vec<u8> = Vec::with_capacity(count);
         unsafe {
             raw::stream_read(self.id, buffer.as_mut_ptr() as u64, count as u64);
         }
 
-        &buffer[..]
+        buffer
     }
 }
 
@@ -56,12 +56,12 @@ impl<const SIZE: usize> BufferedStream<SIZE> {
     }
 
     pub fn flush(&mut self) {
-
+        self.inner.write(&self.buffer)
     }
 }
 
 impl<const SIZE: usize> StreamRead for BufferedStream<SIZE> {
-    fn read(&mut self, count: usize) -> &[u8] {
+    fn read(&mut self, count: usize) -> Vec<u8> {
         self.inner.read(count)
     }
 }

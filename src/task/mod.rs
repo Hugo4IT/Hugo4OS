@@ -4,6 +4,7 @@ use alloc::boxed::Box;
 
 pub mod executor;
 pub mod keyboard;
+pub mod process_manager;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct TaskId(u64);
