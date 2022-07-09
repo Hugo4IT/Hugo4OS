@@ -1,3 +1,0 @@
-[submodule "crates/libs/external/bootloader"]
-	path = crates/libs/external/bootloader
-	url = https://github.com/Hugo4OS/Hugo4OS-bootloader
