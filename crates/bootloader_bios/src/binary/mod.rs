@@ -36,7 +36,7 @@ const PAGE_SIZE: u64 = 4096;
 pub fn init_logger(framebuffer: &'static mut [u8], info: FrameBufferInfo) {
     let logger = logger::LOGGER.get_or_init(move || logger::LockedLogger::new(framebuffer, info));
     log::set_logger(logger).expect("logger already set");
-    log::set_max_level(log::LevelFilter::Trace);
+    log::set_max_level(log::LevelFilter::Error);
     log::info!("Framebuffer info: {:?}", info);
 }
 

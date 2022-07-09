@@ -29,9 +29,12 @@ pub mod util;
 // These functions will call `kernel_main` when done
 #[cfg(target_arch = "x86_64")] bootloader::entry_point!(arch::_x86_64::init);
 
+// TODO: Add aarch64 support
+// TODO: Make `kernel_main` "extern C" so Hugo4OS can be architecture independent, with bootloaders starting it instead of the other way around
+
 fn kernel_main<Arch: Architecture>(framebuffer: &mut Arch::FrameBuffer) -> ! {
     let mut renderer = Renderer::new(framebuffer, CPURenderer::new());
-        
+
     // Display splash screen
     
     let center_x = renderer.get_width() / 2;
