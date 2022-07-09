@@ -5,10 +5,8 @@ edition = "2021"
 
 [workspace]
 members = [
-    "boot",
     "crates/hugo4os_std",
     "crates/hugo4os_syscall",
-    "crates/external/bootloader",
     "crates/bootloader_bios",
 ]
 
