@@ -115,6 +115,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "bootloader_bios"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "conquer-once 0.2.1",
+ "log",
+ "noto-sans-mono-bitmap",
+ "rand",
+ "rand_chacha",
+ "raw-cpuid",
+ "rsdp",
+ "spinning_top",
+ "usize_conversions",
+ "x86_64",
+ "xmas-elf",
+]
+
+[[package]]
 name = "build_const"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -305,7 +323,7 @@ dependencies = [
 name = "hugo4os"
 version = "0.1.0"
 dependencies = [
- "bootloader",
+ "bootloader_bios",
  "conquer-once 0.3.2",
  "crossbeam-queue",
  "fontdue",

@@ -1,6 +1,6 @@
-use bootloader::BootInfo;
+use bootloader::{BootInfo, boot_info::FrameBuffer};
 
-use crate::util::Locked;
+use crate::{util::Locked, kernel::architecture::Architecture};
 use memory::FixedSizeBlockAllocator;
 
 pub mod gdt;
@@ -20,5 +20,10 @@ pub fn init(boot_info: &'static mut BootInfo) -> ! {
         &boot_info.memory_regions
     );
 
-    crate::kernel_main(boot_info.framebuffer.as_mut().unwrap())
+    crate::kernel_main::<X86_64>(boot_info.framebuffer.as_mut().unwrap())
+}
+
+pub struct X86_64;
+impl Architecture for X86_64 {
+    type FrameBuffer = FrameBuffer;
 }

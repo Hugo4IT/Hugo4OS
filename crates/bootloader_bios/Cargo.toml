@@ -1,0 +1,32 @@
+[package]
+name = "bootloader_bios"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "bios"
+path = "src/main.rs"
+
+[lib]
+name = "bootloader"
+path = "src/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rsdp = "1.0.0"
+x86_64 = { version = "0.14.7", default-features = false, features = ["instructions", "inline_asm"] }
+usize_conversions = "0.2.0"
+bit_field = "0.10.0"
+log = "0.4.8"
+conquer-once = { version = "0.2.1", default-features = false }
+spinning_top = "0.2.1"
+raw-cpuid = "10.2.0" 
+rand = { version = "0.8.4", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+xmas-elf = "0.8.0"
+
+[dependencies.noto-sans-mono-bitmap]
+version = "0.1.2"
+default-features = false
+features = ["regular", "size_14"]

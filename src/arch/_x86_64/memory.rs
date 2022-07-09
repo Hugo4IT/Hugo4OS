@@ -3,8 +3,12 @@ use core::{alloc::{GlobalAlloc, Layout}, ptr::{self, NonNull}};
 use bootloader::boot_info::{MemoryRegions, MemoryRegionKind};
 use x86_64::{structures::paging::{PageTable, OffsetPageTable, FrameAllocator, Size4KiB, PhysFrame, mapper::MapToError, Mapper, Page, PageTableFlags}, VirtAddr, PhysAddr};
 
-use crate::{constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}, util::Locked};
-use super::ALLOCATOR;
+use crate::{constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}, util::Locked, kernel::memory::MemoryManager};
+use super::{ALLOCATOR, X86_64};
+
+impl MemoryManager for X86_64 {
+    
+}
 
 pub fn init(physical_memory_offset: u64, memory_regions: &'static MemoryRegions) {
     let phys_mem_offset = VirtAddr::new(physical_memory_offset);

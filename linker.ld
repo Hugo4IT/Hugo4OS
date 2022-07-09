@@ -1,7 +1,5 @@
 ENTRY(_start)
 
-/* From rust-osdev/bootloader */
-
 SECTIONS {
     . = 0x500;
     /* buffer for loading the kernel */
@@ -26,6 +24,7 @@ SECTIONS {
     _stack_start = .;
     . = 0x7c00;
     _stack_end = .;
+
 
     .bootloader :
     {

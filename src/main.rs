@@ -13,7 +13,7 @@ use core::panic::PanicInfo;
 
 use fontdue::{Font, FontSettings};
 
-use kernel::{abstractions::rendering::FrameBuffer, rendering::{Renderer, backend::cpu::CPURenderer}};
+use kernel::{abstractions::rendering::FrameBuffer, rendering::{Renderer, backend::cpu::CPURenderer}, architecture::Architecture};
 use task::{executor::Executor, Task};
 
 #[cfg(test)] pub mod tests;
@@ -29,11 +29,7 @@ pub mod util;
 // These functions will call `kernel_main` when done
 #[cfg(target_arch = "x86_64")] bootloader::entry_point!(arch::_x86_64::init);
 
-fn kernel_main<F: FrameBuffer>(framebuffer: &mut F) -> ! {
-    // unsafe { core::arch::asm!("int 0x80") };
-    // unsafe { core::arch::asm!("int 0x80") };
-    unsafe { hugo4os_syscall::test_syscall() }
-
+fn kernel_main<Arch: Architecture>(framebuffer: &mut Arch::FrameBuffer) -> ! {
     let mut renderer = Renderer::new(framebuffer, CPURenderer::new());
         
     // Display splash screen
