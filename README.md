@@ -4,15 +4,25 @@ Me just experimenting with OS development in rust
 
 ## Usage
 
-> Minimum supported rustc: `1.61.0-nightly` (I'm using `0677edc86 2022-03-31`).
+### Build dependencies
+
+Cargo should automatically detect all necessary components by checking `rust-toolchain.toml`, but you still need `just` to use the build system:
+
+```bash
+cargo install just
+```
+
+> Minimum supported rustc: `1.61.0-nightly` (Cargo should automatically install `nightly-2022-04-02` as configured in `rust-toolchain.toml`).
 >
-> `llvm-tools-preview` must also be installed and available in PATH: `rustup component add llvm-tools-preview`
+> LLVM tools also need to be installed and available in PATH: `rustup component add llvm-tools-preview`
 >
 > To enable verbose output in the terminal, append `--features verbose` to any of these commands:
 
-- Building and running with the resulting image in [Qemu](https://www.qemu.org/): `just run`
+Building and running with the resulting image in [Qemu](https://www.qemu.org/):
 
-Big thanks to [Philipp Oppermann](https://os.phil-opp.com/)
+```bash
+just run
+```
 
 ## Showcase
 
@@ -23,3 +33,5 @@ A screenshot (taken in QEMU) of current rendering capabilities in Hugo4OS:
 A video of Hugo4OS running on real hardware (turn the sound on!):
 
 https://user-images.githubusercontent.com/48245742/161477623-4e3c07cb-3731-45eb-ac30-6e9032fa7e2b.mp4
+
+> Big thanks to [Philipp Oppermann](https://os.phil-opp.com/), his blog is what inspired me, and got Hugo4OS up and running.
