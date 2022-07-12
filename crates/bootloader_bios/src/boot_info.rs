@@ -153,7 +153,7 @@ pub enum MemoryRegionKind {
 #[derive(Debug)]
 #[repr(C)]
 pub struct FrameBuffer {
-    pub(crate) buffer_start: u64,
+    pub buffer_start: u64,
     pub(crate) buffer_byte_len: usize,
     pub(crate) info: FrameBufferInfo,
 }

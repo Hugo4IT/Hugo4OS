@@ -3,8 +3,8 @@ use core::{alloc::{GlobalAlloc, Layout}, ptr::{self, NonNull}};
 use bootloader::boot_info::{MemoryRegions, MemoryRegionKind};
 use x86_64::{structures::paging::{PageTable, OffsetPageTable, FrameAllocator, Size4KiB, PhysFrame, mapper::MapToError, Mapper, Page, PageTableFlags}, VirtAddr, PhysAddr};
 
-use crate::{constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}, util::Locked, kernel::memory::MemoryManager};
-use super::{ALLOCATOR, X86_64};
+use hugo4os::{constants::{HEAP_SIZE, HEAP_START, BLOCK_SIZES}, kernel::memory::MemoryManager};
+use super::{ALLOCATOR, X86_64, Locked};
 
 impl MemoryManager for X86_64 {
     

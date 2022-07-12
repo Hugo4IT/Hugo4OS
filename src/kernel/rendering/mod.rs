@@ -8,15 +8,15 @@ use fontdue::{Font, layout::{Layout, CoordinateSystem, TextStyle}};
 use crate::{loaders::image::Image, kernel::abstractions::rendering::{FrameBuffer, FrameBufferInfo}};
 use backend::RenderBackend;
 
-pub struct Renderer<'a, F: FrameBuffer, B: RenderBackend> {
+pub struct Renderer<F: FrameBuffer, B: RenderBackend> {
     backend: B,
-    framebuffer: &'a mut F,
+    framebuffer: F,
     buffer_info: FrameBufferInfo,
     pub fonts: Vec<Font>,
 }
 
-impl<'a, F: FrameBuffer, B: RenderBackend> Renderer<'a, F, B> {
-    pub fn new(framebuffer: &mut F, mut backend: B) -> Renderer<F, B> {
+impl<F: FrameBuffer, B: RenderBackend> Renderer<F, B> {
+    pub fn new(framebuffer: F, mut backend: B) -> Renderer<F, B> {
         let buffer_info = framebuffer.info();
         backend.init(
             buffer_info.width,
@@ -175,6 +175,6 @@ impl<'a, F: FrameBuffer, B: RenderBackend> Renderer<'a, F, B> {
         let height = self.buffer_info.height;
         let bpp = self.buffer_info.bytes_per_pixel;
 
-        unsafe { core::ptr::copy(bb_start, fb_start, stride * height * bpp) };
+        unsafe { core::ptr::copy_nonoverlapping(bb_start, fb_start, stride * height * bpp) };
     }
 }

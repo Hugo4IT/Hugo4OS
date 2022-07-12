@@ -3,7 +3,7 @@ use core::task::{Waker, Context, Poll};
 use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
 use crossbeam_queue::ArrayQueue;
 
-use crate::constants::MAXIMUM_CONCURRENT_TASKS;
+use crate::{constants::MAXIMUM_CONCURRENT_TASKS, kernel::interrupts::Interrupts};
 
 use super::{Task, TaskId};
 
@@ -58,21 +58,19 @@ impl Executor {
         self.task_queue.push(task_id).expect("Task queue full!");
     }
 
-    pub fn run(&mut self) -> ! {
+    pub fn run<I: Interrupts>(&mut self) -> ! {
         loop {
             self.run_ready_tasks();
-            self.sleep_when_idle();
+            self.sleep_when_idle::<I>();
         }
     }
 
-    fn sleep_when_idle(&self) {
-        use x86_64::instructions::interrupts;
-
-        interrupts::disable();
+    fn sleep_when_idle<I: Interrupts>(&self) {
+        I::disable();
         if self.task_queue.is_empty() {
-            interrupts::enable_and_hlt();
+            I::enable_and_halt();
         } else {
-            interrupts::enable();
+            I::enable();
         }
     }
 

@@ -1,0 +1,18 @@
+[package]
+name = "hugo4os_x86_64_bios"
+version = "0.1.0"
+edition = "2021"
+description = "Starts Hugo4OS on x86_64 hardware with the BIOS bootloader"
+
+[[bin]]
+name = "hugo4os"
+path = "src/main.rs"
+
+[dependencies]
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+bootloader_bios = { path = "../bootloader_bios" }
+linked_list_allocator = "0.9.1"
+hugo4os = { path = "../../" }
+pic8259 = "0.10.2"
+x86_64 = "0.14.9"
+spin = "0.9.2"

@@ -1,15 +1,18 @@
+use hugo4os::kernel::interrupts::Interrupts;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 use x86_64::instructions::port::Port;
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
 use spin;
 
-use crate::kernel::abstractions;
-use crate::{println, kernel};
+use hugo4os::kernel::{abstractions, self};
 
+pub use x86_64::instructions::interrupts::enable_and_hlt;
 pub use x86_64::instructions::interrupts::without_interrupts as with_disabled;
-pub use x86_64::instructions::interrupts::disable as disable;
-pub use x86_64::instructions::interrupts::enable as enable;
+pub use x86_64::instructions::interrupts::disable;
+pub use x86_64::instructions::interrupts::enable;
+
+use crate::{println, X86_64};
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -37,6 +40,28 @@ lazy_static! {
 }
 
 pub static PICS: spin::Mutex<ChainedPics> = spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
+
+impl Interrupts for X86_64 {
+    #[inline]
+    fn enable() {
+        enable()
+    }
+
+    #[inline]
+    fn disable() {
+        disable()
+    }
+
+    #[inline]
+    fn with_disabled(f: impl FnOnce()) {
+        with_disabled(f)
+    }
+
+    #[inline]
+    fn enable_and_halt() {
+        enable_and_hlt()
+    }
+}
 
 pub fn init() {
     IDT.load();
@@ -86,28 +111,26 @@ pub enum InterruptIndex {
 
 // Exceptions
 
-extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
-    println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+extern "x86-interrupt" fn breakpoint_handler(_stack_frame: InterruptStackFrame) {
+    println!("EXCEPTION: BREAKPOINT\n{:#?}", _stack_frame);
 }
 
-extern "x86-interrupt" fn simd_floating_point_handler(stack_frame: InterruptStackFrame) {
-    println!("SIMD EXCEPTION: {:#?}", stack_frame);
+extern "x86-interrupt" fn simd_floating_point_handler(_stack_frame: InterruptStackFrame) {
+    println!("SIMD EXCEPTION: {:#?}", _stack_frame);
 }
 
-extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, _error_code: u64) -> ! {
-    panic!("EXCEPTION: DOUBLE FAULT\n{:#?}\n", stack_frame);
+extern "x86-interrupt" fn double_fault_handler(_stack_frame: InterruptStackFrame, _error_code: u64) -> ! {
+    panic!("EXCEPTION: DOUBLE FAULT\n{:#?}\n", _stack_frame);
 }
 
 extern "x86-interrupt" fn page_fault_handler(
-    stack_frame: InterruptStackFrame,
-    error_code: PageFaultErrorCode,
+    _stack_frame: InterruptStackFrame,
+    _error_code: PageFaultErrorCode,
 ) {
-    use x86_64::registers::control::Cr2;
-
     println!("EXCEPTION: PAGE FAULT");
-    println!("Accessed Address: {:?}", Cr2::read());
-    println!("Error Code: {:?}", error_code);
-    println!("{:#?}", stack_frame);
+    println!("Accessed Address: {:?}", x86_64::registers::control::Cr2::read());
+    println!("Error Code: {:?}", _error_code);
+    println!("{:#?}", _stack_frame);
 }
 
 // Interrupt vectors

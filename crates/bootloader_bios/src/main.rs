@@ -286,3 +286,6 @@ fn panic(info: &PanicInfo) -> ! {
         unsafe { asm!("cli; hlt") };
     }
 }
+
+// This constant is optimized away by the compiler, it just makes sure Hugo4OS gets relinked with the bootloader when changes are detected.
+const _: &[u8] = include_bytes!("../../../target/x86_64-hugo4os/release/libkernel_bin-hugo4os.a");

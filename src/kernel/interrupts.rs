@@ -1,9 +1,11 @@
-use crate::println;
 use crate::task;
 
-#[cfg(target_arch = "x86_64")] pub use crate::arch::_x86_64::interrupts::enable as enable;
-#[cfg(target_arch = "x86_64")] pub use crate::arch::_x86_64::interrupts::disable as disable;
-#[cfg(target_arch = "x86_64")] pub use crate::arch::_x86_64::interrupts::with_disabled as with_disabled;
+pub trait Interrupts {
+    fn enable();
+    fn disable();
+    fn with_disabled(f: impl FnOnce());
+    fn enable_and_halt();
+}
 
 use super::abstractions::interrupts::InputSyscall;
 
@@ -25,11 +27,8 @@ pub fn rtc() {
 pub fn syscall(args: InputSyscall) -> u64 {
     let target = unsafe { *args.target };
 
-    println!("SYSCALL!");
-    println!("{:?}", args);
 
     if target == 1 {
-        println!("print: {}", args.args[0]);
     }
 
     return 1337;

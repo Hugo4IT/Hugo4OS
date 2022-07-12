@@ -1,54 +1,5 @@
 use alloc::vec::Vec;
 
-use crate::{println, print, CPURenderer, constants};
-
-pub fn exit_qemu(exit_code: u32) {
-    use x86_64::instructions::port::Port;
-
-    unsafe {
-        let mut port = Port::new(0xf4);
-        port.write(exit_code as u32);
-    }
-}
-
-#[cfg(test)]
-pub fn test_runner(tests: &[&dyn Testable]) {
-    println!("Running {} tests", tests.len());
-    for (_i, test) in tests.iter().enumerate() {
-        test.run();
-    }
-
-    println!("\nThis is a false positive:");
-    exit_qemu(0x11);
-}
-
-pub trait Testable {
-    fn run(&self) -> ();
-}
-
-impl<T> Testable for T
-where
-    T: Fn(),
-{
-    fn run(&self) {
-        print!("[{}] Running... ", core::any::type_name::<T>());
-        self();
-        println!("Ok!");
-    }
-}
-
-#[test_case]
-fn check_test_framework() {
-    assert_eq!(1, 1);
-}
-
-// Interrupts
-
-#[test_case]
-fn check_crash_catch() {
-    x86_64::instructions::interrupts::int3();
-}
-
 // Rendering
 
 #[test_case]
